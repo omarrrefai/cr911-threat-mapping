@@ -1,33 +1,39 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"/>
-<title>MiTRE-CR911 — Mapping i3 Threat & Response</title>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>MiTRE-CR911 — Matrix view</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap">
 <style>
   :root{
-    --bg:#0f1724; --card:#0b1220; --accent:#00d9a3; --muted:#94a3b8;
-    --high:#ff6b6b; --med:#ffb86b; --low:#7ef6ff;
-    font-family:Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+    --bg:#061226; --panel:#0b1624; --muted:#9fb0c9; --accent:#00d9a3; --card:#0f2230;
+    --cell-border: rgba(255,255,255,0.04);
+    --glass: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
   }
-  body{margin:0;background:linear-gradient(180deg,#031024 0%, #061428 100%);color:#e6eef8}
-  header{padding:28px 32px;display:flex;align-items:center;gap:18px}
-  header h1{margin:0;font-size:20px;color:var(--accent)}
-  .wrap{display:grid;grid-template-columns:320px 1fr;gap:18px;padding:18px 32px}
-  .panel{background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));padding:16px;border-radius:12px;box-shadow:0 6px 18px rgba(2,6,23,0.6)}
-  .tactic{padding:10px;border-radius:10px;margin-bottom:8px;cursor:pointer}
-  .tactic:hover{filter:brightness(1.06)}
-  .badge{display:inline-block;padding:6px 8px;border-radius:999px;background:rgba(255,255,255,0.04);font-size:12px;color:var(--muted);margin-left:8px}
-  .tech{margin:10px 0;padding:10px;border-radius:8px;background:rgba(255,255,255,0.02)}
-  .fe{display:inline-block;padding:6px 8px;border-radius:6px;margin-right:6px;font-size:12px;background:rgba(255,255,255,0.03)}
-  footer{padding:18px 32px;color:var(--muted);font-size:13px}
-  .legend{display:flex;gap:8px;align-items:center}
-  .pill{padding:6px 10px;border-radius:999px}
-  .risk-high{background:linear-gradient(90deg,#ff6b6b66,#ff3b3b22)}
-  .risk-med{background:linear-gradient(90deg,#ffb86b66,#ff9a3b22)}
-  .risk-low{background:linear-gradient(90deg,#7ef6ff66,#3be8ff22)}
-  .search{width:100%;padding:8px;border-radius:8px;border:0;background:#021025;color:#cfe8ff;margin-bottom:10px}
-  pre{background:#021025;padding:10px;border-radius:8px;overflow:auto}
+  *{box-sizing:border-box}
+  body{margin:0;background:linear-gradient(180deg,#031028 0%,#061428 100%);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial;color:#e6eef8}
+  header{padding:28px 32px;display:flex;align-items:center;gap:16px}
+  header h1{margin:0;color:var(--accent);font-size:20px}
+  .wrap{padding:10px 20px 40px;max-width:1200px;margin:0 auto}
+  .controls{display:flex;gap:12px;align-items:center;margin-bottom:12px}
+  .search{padding:10px 12px;border-radius:10px;border:0;background:#042034;color:#cfe8ff;min-width:260px}
+  .matrix{display:flex;gap:8px;overflow:auto;padding-bottom:8px}
+  .column{min-width:220px;background:var(--panel);border-radius:10px;padding:12px;border:1px solid var(--cell-border)}
+  .col-title{font-weight:700;margin:0 0 8px;color:var(--accent);font-size:15px}
+  .col-sub{color:var(--muted);font-size:13px;margin-bottom:8px}
+  .cell{background:var(--card);padding:8px;border-radius:8px;margin-bottom:8px;border:1px solid rgba(255,255,255,0.02);cursor:pointer;transition:transform .12s, box-shadow .12s}
+  .cell:hover{transform:translateY(-4px);box-shadow:0 8px 24px rgba(0,0,0,0.6)}
+  .cell .name{font-weight:600}
+  .cell .meta{font-size:12px;color:var(--muted);margin-top:6px}
+  aside.panel{position:fixed;right:20px;top:90px;width:420px;max-height:76vh;overflow:auto;padding:16px;border-radius:12px;background:var(--panel);border:1px solid var(--cell-border)}
+  aside.panel h2{margin:0 0 8px;color:var(--accent)}
+  aside.panel .affected{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+  .tag{background:rgba(255,255,255,0.03);padding:6px 8px;border-radius:8px;font-size:12px;color:var(--muted)}
+  .btn{display:inline-block;padding:8px 10px;border-radius:8px;background:#072432;border:1px solid rgba(255,255,255,0.03);color:#bfefff;text-decoration:none;margin-top:8px}
+  pre.json{background:#031323;padding:8px;border-radius:8px;color:#cfe8ff;overflow:auto;max-height:220px}
+  footer{max-width:1200px;margin:20px auto 60px;padding:0 20px;color:var(--muted);font-size:13px}
+  @media(max-width:1000px){ aside.panel{position:static;width:auto;margin-top:16px} .wrap{padding-bottom:80px} }
 </style>
 </head>
 <body>
@@ -37,106 +43,136 @@
     <path d="M6 12h12M12 6v12" stroke="#00d9a3" stroke-width="1.6" stroke-linecap="round"/>
   </svg>
   <div>
-    <h1>MiTRE-CR911 — Mapping i3 Threat & Response</h1>
-    <div style="color:var(--muted);font-size:13px">Interactive mapping (editable JSON) — designed for PSAP / ESInet threat briefings</div>
+    <h1>MiTRE-CR911 — Matrix view (i3 mapping)</h1>
+    <div style="color:var(--muted);font-size:13px">Click any cell to show technique details and playbook</div>
   </div>
 </header>
 
 <div class="wrap">
-  <aside class="panel">
-    <input class="search" placeholder="filter tactics or techniques..." id="q"/>
-    <div id="tacticsList"></div>
-    <div style="margin-top:12px;color:var(--muted);font-size:13px">
-      <strong>Legend</strong>
-      <div class="legend" style="margin-top:6px">
-        <span class="pill risk-high">High / Critical</span>
-        <span class="pill risk-med">Medium</span>
-        <span class="pill risk-low">Low</span>
-      </div>
-    </div>
+  <div class="controls">
+    <input id="q" class="search" placeholder="Filter tactics or techniques..." />
+    <a class="btn" href="index.html">Home</a>
+    <a class="btn" href="playbooks/index.html">Playbooks</a>
+  </div>
+
+  <div class="matrix" id="matrix"></div>
+
+  <aside class="panel" id="panel" aria-hidden="true" style="display:none;">
+    <h2 id="panel-title">Technique</h2>
+    <div id="panel-desc" style="color:var(--muted);margin-top:6px"></div>
+    <div style="margin-top:10px"><strong>Affected</strong></div>
+    <div class="affected" id="panel-affected"></div>
+    <div style="margin-top:10px"><strong>Mitigations</strong></div>
+    <div class="affected" id="panel-mitigations"></div>
+    <div style="margin-top:10px"><strong>Evidence</strong></div>
+    <div style="color:var(--muted);font-size:13px" id="panel-evidence"></div>
+    <a id="panel-playbook" class="btn" href="#" target="_blank">Open playbook</a>
+    <div style="margin-top:12px"><strong>Raw (technique)</strong></div>
+    <pre class="json" id="panel-raw"></pre>
   </aside>
 
-  <main class="panel" id="details">
-    <h2 style="margin-top:0" id="title">Select a tactic</h2>
-    <div id="content" style="color:var(--muted)">Click a tactic on the left to see techniques, affected i3 functional elements, and suggested mitigations.</div>
-    <hr style="margin:18px 0;border:none;border-top:1px solid rgba(255,255,255,0.04)"/>
-    <div>
-      <strong>Raw mapping JSON</strong>
-      <pre id="raw"></pre>
-    </div>
-  </main>
+  <div id="mobilePanel" style="display:none"></div>
 </div>
 
-<footer>
-  Sources: NENA i3 (i3), NENA NG-SEC, and Threat Modeling doc. (This UI is editable; update mapping.json or paste JSON into the developer console to change.)
-</footer>
+<footer>MiTRE-CR911 • mapping JSON is the source-of-truth. Edit mapping.json to update matrix. Keep evidence off public repo if sensitive.</footer>
 
 <script>
-  const DEFAULT_PATH = 'mapping.json';
-  async function load(){
-    let mapping = null;
+  async function loadMapping(){
     try{
-      const res = await fetch(DEFAULT_PATH,{cache:"no-store"});
-      if(res.ok) mapping = await res.json();
+      const res = await fetch('mapping.json', { cache: 'no-store' });
+      if(!res.ok) throw new Error('fetch failed');
+      const data = await res.json();
+      return data;
     }catch(e){
-      // fallback to embedded default if fetch fails
+      console.warn('Could not fetch mapping.json, falling back to embedded mapping.');
+      return {tactics: []};
     }
-    if(!mapping){
-      mapping = {"tactics":[]};
-    }
-    window.mapping = mapping;
-    renderList(mapping.tactics || []);
-    document.getElementById('raw').textContent = JSON.stringify(mapping,null,2);
   }
 
-  function renderList(tactics){
-    const container = document.getElementById('tacticsList');
+  function createCell(tech, colIndex, techIndex){
+    const div = document.createElement('div');
+    div.className = 'cell';
+    div.dataset.techId = tech.id;
+    div.innerHTML = `<div class="name">${tech.name}</div><div class="meta">${(tech.affected||[]).join(', ')}</div>`;
+    div.onclick = ()=> showTech(tech);
+    return div;
+  }
+
+  function createColumn(tactic, idx){
+    const col = document.createElement('div');
+    col.className = 'column';
+    const title = document.createElement('div'); title.className='col-title'; title.textContent = tactic.name;
+    const sub = document.createElement('div'); sub.className='col-sub'; sub.textContent = (tactic.techniques||[]).length + ' techniques';
+    col.appendChild(title); col.appendChild(sub);
+    (tactic.techniques||[]).forEach((tech,i)=>{
+      col.appendChild(createCell(tech, idx, i));
+    });
+    return col;
+  }
+
+  function renderMatrix(mapping){
+    const container = document.getElementById('matrix');
     container.innerHTML = '';
-    const q = document.getElementById('q');
-    q.oninput = ()=> renderList(filterTactics(q.value));
-    for(const t of tactics){
-      const div = document.createElement('div');
-      div.className = 'tactic';
-      div.style.borderLeft = t.risk==='high' ? '4px solid #ff6b6b' : t.risk==='med' ? '4px solid #ffb86b' : '4px solid #7ef6ff';
-      div.innerHTML = `<strong>${t.name}</strong><span class="badge">${(t.techniques||[]).length} tech</span><div style="color:var(--muted);font-size:13px">${(t.techniques||[]).map(x=>x.name).slice(0,2).join(' · ')}</div>`;
-      div.onclick = ()=> showTactic(t);
-      container.appendChild(div);
+    if(!mapping.tactics || mapping.tactics.length===0){
+      container.textContent = 'No tactics found in mapping.json';
+      return;
     }
+    mapping.tactics.forEach((t,i)=>{
+      container.appendChild(createColumn(t,i));
+    });
   }
 
-  function filterTactics(q){
-    if(!q) return window.mapping.tactics || [];
-    q=q.toLowerCase();
-    return (window.mapping.tactics||[]).filter(t=> t.name.toLowerCase().includes(q) || (t.techniques||[]).some(tc=>tc.name.toLowerCase().includes(q)));
-  }
-
-  function showTactic(t){
-    document.getElementById('title').textContent = t.name;
-    const c = document.getElementById('content');
-    c.innerHTML = '';
-    for(const tech of (t.techniques||[])){
-      const div = document.createElement('div');
-      div.className = 'tech';
-      div.innerHTML = `<strong>${tech.name}</strong> <span style="float:right;color:var(--muted)">${(tech.affected||[]).join(', ')}</span>
-        <div style="margin-top:8px;color:var(--muted)">${tech.notes || ''}</div>
-        <div style="margin-top:8px"><em>Mitigations</em>: ${(tech.mitigations||tech.mitigation||[]).join(', ')}</div>`;
-      const fe = document.createElement('div');
-      fe.style.marginTop='8px';
-      (tech.affected||[]).forEach(a=>{
-        const s = document.createElement('span'); s.className='fe'; s.textContent=a; fe.appendChild(s);
-      });
-      div.appendChild(fe);
-      if(tech.evidence){
-        const ev = document.createElement('div');
-        ev.style.marginTop='8px'; ev.style.color='var(--muted)'; ev.style.fontSize='13px';
-        ev.textContent = 'Evidence: ' + tech.evidence;
-        div.appendChild(ev);
+  function showTech(tech){
+    const panel = document.getElementById('panel');
+    document.getElementById('panel-title').textContent = tech.name;
+    document.getElementById('panel-desc').textContent = tech.description || '';
+    const af = document.getElementById('panel-affected');
+    af.innerHTML = '';
+    (tech.affected || []).forEach(a=>{
+      const s = document.createElement('span'); s.className='tag'; s.textContent=a; af.appendChild(s);
+    });
+    const mg = document.getElementById('panel-mitigations');
+    mg.innerHTML=''; (tech.mitigations || tech.mitigation || []).forEach(m=>{ const s=document.createElement('span'); s.className='tag'; s.textContent=m; mg.appendChild(s)});
+    document.getElementById('panel-evidence').textContent = tech.evidence || '';
+    document.getElementById('panel-raw').textContent = JSON.stringify(tech, null, 2);
+    // Playbook link
+    const pb = document.getElementById('panel-playbook');
+    const fname = tech.id + '.md';
+    fetch('playbooks/' + fname, { method: 'HEAD' }).then(r=>{
+      if(r && r.ok){
+        pb.href = 'playbooks/' + fname; pb.style.display='inline-block';
+      } else {
+        pb.style.display='none';
       }
-      c.appendChild(div);
+    }).catch(()=>{ pb.style.display='none' });
+    panel.style.display='block'; panel.setAttribute('aria-hidden','false');
+    if(window.innerWidth < 900){
+      panel.scrollIntoView({behavior:'smooth'});
     }
   }
 
-  load();
+  function applyFilter(q, mapping){
+    if(!q) return mapping;
+    q = q.toLowerCase();
+    const filtered = { tactics: [] };
+    mapping.tactics.forEach(t=>{
+      const techs = (t.techniques||[]).filter(tc => tc.name.toLowerCase().includes(q) || (tc.id||'').toLowerCase().includes(q) || (tc.affected||[]).join(' ').toLowerCase().includes(q));
+      if(t.name.toLowerCase().includes(q) || techs.length>0){
+        const copy = Object.assign({}, t); copy.techniques = techs.length>0 ? techs : t.techniques; filtered.tactics.push(copy);
+      }
+    });
+    return filtered;
+  }
+
+  (async ()=>{
+    const mapping = await loadMapping();
+    renderMatrix(mapping);
+    const q = document.getElementById('q');
+    q.oninput = ()=>{
+      const fm = applyFilter(q.value, mapping);
+      renderMatrix(fm);
+    };
+  })();
 </script>
 </body>
 </html>
