@@ -3,37 +3,40 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>MiTRE-CR911 — Matrix view</title>
+<title>MiTRE-CR911 — ATT&CK-style Matrix</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap">
 <style>
   :root{
     --bg:#061226; --panel:#0b1624; --muted:#9fb0c9; --accent:#00d9a3; --card:#0f2230;
     --cell-border: rgba(255,255,255,0.04);
-    --glass: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
   }
   *{box-sizing:border-box}
   body{margin:0;background:linear-gradient(180deg,#031028 0%,#061428 100%);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial;color:#e6eef8}
   header{padding:28px 32px;display:flex;align-items:center;gap:16px}
   header h1{margin:0;color:var(--accent);font-size:20px}
-  .wrap{padding:10px 20px 40px;max-width:1200px;margin:0 auto}
+  .wrap{padding:10px 20px 40px;max-width:1400px;margin:0 auto}
   .controls{display:flex;gap:12px;align-items:center;margin-bottom:12px}
   .search{padding:10px 12px;border-radius:10px;border:0;background:#042034;color:#cfe8ff;min-width:260px}
-  .matrix{display:flex;gap:8px;overflow:auto;padding-bottom:8px}
-  .column{min-width:220px;background:var(--panel);border-radius:10px;padding:12px;border:1px solid var(--cell-border)}
-  .col-title{font-weight:700;margin:0 0 8px;color:var(--accent);font-size:15px}
-  .col-sub{color:var(--muted);font-size:13px;margin-bottom:8px}
-  .cell{background:var(--card);padding:8px;border-radius:8px;margin-bottom:8px;border:1px solid rgba(255,255,255,0.02);cursor:pointer;transition:transform .12s, box-shadow .12s}
-  .cell:hover{transform:translateY(-4px);box-shadow:0 8px 24px rgba(0,0,0,0.6)}
-  .cell .name{font-weight:600}
+  .matrix-table{display:flex;gap:12px;align-items:flex-start;overflow:auto;padding-bottom:8px}
+  .column{min-width:220px;background:transparent;border-radius:8px;padding:6px;flex:0 0 220px}
+  .col-head{background:linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.02));padding:10px;border-radius:8px;border:1px solid var(--cell-border);font-weight:700;color:var(--accent);font-size:14px;text-align:center}
+  .cell-grid{margin-top:8px;display:flex;flex-direction:column;gap:8px}
+  .cell{background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.02);cursor:pointer;transition:transform .12s,box-shadow .12s}
+  .cell:hover{transform:translateY(-4px);box-shadow:0 12px 36px rgba(0,0,0,0.6)}
+  .cell .title{font-weight:600;font-size:13px}
   .cell .meta{font-size:12px;color:var(--muted);margin-top:6px}
-  aside.panel{position:fixed;right:20px;top:90px;width:420px;max-height:76vh;overflow:auto;padding:16px;border-radius:12px;background:var(--panel);border:1px solid var(--cell-border)}
-  aside.panel h2{margin:0 0 8px;color:var(--accent)}
-  aside.panel .affected{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
-  .tag{background:rgba(255,255,255,0.03);padding:6px 8px;border-radius:8px;font-size:12px;color:var(--muted)}
-  .btn{display:inline-block;padding:8px 10px;border-radius:8px;background:#072432;border:1px solid rgba(255,255,255,0.03);color:#bfefff;text-decoration:none;margin-top:8px}
-  pre.json{background:#031323;padding:8px;border-radius:8px;color:#cfe8ff;overflow:auto;max-height:220px}
+  .modal-backdrop{position:fixed;left:0;top:0;right:0;bottom:0;background:rgba(1,8,14,0.6);display:none;align-items:center;justify-content:center;padding:20px;z-index:40}
+  .modal{background:#041825;border-radius:12px;padding:18px;max-width:900px;width:100%;max-height:86vh;overflow:auto;border:1px solid rgba(255,255,255,0.04)}
+  .modal h2{margin:0 0 8px;color:var(--accent)}
+  .modal .meta{color:var(--muted);font-size:13px;margin-bottom:8px}
+  .close-btn{float:right;background:transparent;border:0;color:var(--muted);font-size:18px;cursor:pointer;padding:6px}
+  .playbook-content h3{margin-top:14px}
+  .playbook-content pre{background:#021422;padding:10px;border-radius:8px;overflow:auto}
+  .tag{display:inline-block;background:rgba(255,255,255,0.03);padding:6px 8px;border-radius:8px;color:var(--muted);font-size:12px;margin-right:6px;margin-top:6px}
+  .links{margin-top:12px}
+  .btn{display:inline-block;padding:8px 10px;border-radius:8px;background:#072432;border:1px solid rgba(255,255,255,0.03);color:#bfefff;text-decoration:none}
   footer{max-width:1200px;margin:20px auto 60px;padding:0 20px;color:var(--muted);font-size:13px}
-  @media(max-width:1000px){ aside.panel{position:static;width:auto;margin-top:16px} .wrap{padding-bottom:80px} }
+  @media(max-width:1000px){ .matrix-table{flex-wrap:nowrap} .modal{max-width:100%} }
 </style>
 </head>
 <body>
@@ -43,8 +46,8 @@
     <path d="M6 12h12M12 6v12" stroke="#00d9a3" stroke-width="1.6" stroke-linecap="round"/>
   </svg>
   <div>
-    <h1>MiTRE-CR911 — Matrix view (i3 mapping)</h1>
-    <div style="color:var(--muted);font-size:13px">Click any cell to show technique details and playbook</div>
+    <h1>MiTRE-CR911 — ATT&CK-style Matrix</h1>
+    <div style="color:#9fb0c9;font-size:13px">Columns = tactics. Click a technique to open a presentable playbook (rendered HTML).</div>
   </div>
 </header>
 
@@ -55,124 +58,127 @@
     <a class="btn" href="playbooks/index.html">Playbooks</a>
   </div>
 
-  <div class="matrix" id="matrix"></div>
-
-  <aside class="panel" id="panel" aria-hidden="true" style="display:none;">
-    <h2 id="panel-title">Technique</h2>
-    <div id="panel-desc" style="color:var(--muted);margin-top:6px"></div>
-    <div style="margin-top:10px"><strong>Affected</strong></div>
-    <div class="affected" id="panel-affected"></div>
-    <div style="margin-top:10px"><strong>Mitigations</strong></div>
-    <div class="affected" id="panel-mitigations"></div>
-    <div style="margin-top:10px"><strong>Evidence</strong></div>
-    <div style="color:var(--muted);font-size:13px" id="panel-evidence"></div>
-    <a id="panel-playbook" class="btn" href="#" target="_blank">Open playbook</a>
-    <div style="margin-top:12px"><strong>Raw (technique)</strong></div>
-    <pre class="json" id="panel-raw"></pre>
-  </aside>
-
-  <div id="mobilePanel" style="display:none"></div>
+  <div class="matrix-table" id="matrix"></div>
 </div>
 
-<footer>MiTRE-CR911 • mapping JSON is the source-of-truth. Edit mapping.json to update matrix. Keep evidence off public repo if sensitive.</footer>
+<!-- modal -->
+<div id="backdrop" class="modal-backdrop" role="dialog" aria-hidden="true">
+  <div class="modal" role="document" aria-modal="true">
+    <button class="close-btn" id="closeBtn" aria-label="Close">&times;</button>
+    <h2 id="modal-title">Playbook</h2>
+    <div class="meta" id="modal-meta"></div>
+    <div class="links" id="modal-links"></div>
+    <div class="playbook-content" id="modal-content"></div>
+  </div>
+</div>
+
+<footer>MiTRE-CR911 — Editable mapping.json is the single source of truth. Keep evidence private if needed.</footer>
 
 <script>
-  async function loadMapping(){
-    try{
-      const res = await fetch('mapping.json', { cache: 'no-store' });
-      if(!res.ok) throw new Error('fetch failed');
-      const data = await res.json();
-      return data;
-    }catch(e){
-      console.warn('Could not fetch mapping.json, falling back to embedded mapping.');
-      return {tactics: []};
-    }
-  }
+// Very small markdown -> HTML (handles headings, bold, lists, code blocks, paragraphs, links)
+function md2html(md){
+  // Escape HTML first
+  md = md.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  // Code blocks ```
+  md = md.replace(/```([\s\S]*?)```/g, function(m, p1){ return '<pre>' + p1.replace(/&lt;br&gt;/g,'<br>') + '</pre>'; });
+  // Headings
+  md = md.replace(/^### (.*$)/gim, '<h3>$1</h3>');
+  md = md.replace(/^## (.*$)/gim, '<h2>$1</h2>');
+  md = md.replace(/^# (.*$)/gim, '<h1>$1</h1>');
+  // Bold **
+  md = md.replace(/\*\*(.*?)\*\*/gim, '<strong>$1</strong>');
+  // Links [text](url)
+  md = md.replace(/\[(.*?)\]\((.*?)\)/gim, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+  // Lists
+  md = md.replace(/^\s*[-*] (.*)/gim, '<li>$1</li>');
+  md = md.replace(/(<li>[\s\S]*?<\/li>)(?![\s\S]*<li>)/g, function(m){ return '<ul>' + m + '</ul>'; });
+  // Paragraphs
+  md = md.split(/\n\n+/).map(function(para){
+    if(para.match(/^<h|^<ul|^<pre/)) return para;
+    return '<p>' + para.replace(/\n/g,'<br/>') + '</p>';
+  }).join('\n');
+  return md;
+}
 
-  function createCell(tech, colIndex, techIndex){
-    const div = document.createElement('div');
-    div.className = 'cell';
-    div.dataset.techId = tech.id;
-    div.innerHTML = `<div class="name">${tech.name}</div><div class="meta">${(tech.affected||[]).join(', ')}</div>`;
-    div.onclick = ()=> showTech(tech);
-    return div;
+async function fetchPlaybook(id){
+  try{
+    const res = await fetch('playbooks/' + id + '.md', { cache: 'no-store' });
+    if(!res.ok) throw new Error('not found');
+    const text = await res.text();
+    return text;
+  }catch(e){
+    return null;
   }
+}
 
-  function createColumn(tactic, idx){
-    const col = document.createElement('div');
-    col.className = 'column';
-    const title = document.createElement('div'); title.className='col-title'; title.textContent = tactic.name;
-    const sub = document.createElement('div'); sub.className='col-sub'; sub.textContent = (tactic.techniques||[]).length + ' techniques';
-    col.appendChild(title); col.appendChild(sub);
-    (tactic.techniques||[]).forEach((tech,i)=>{
-      col.appendChild(createCell(tech, idx, i));
-    });
-    return col;
+function createColumn(tactic){
+  const col = document.createElement('div'); col.className='column';
+  const head = document.createElement('div'); head.className='col-head'; head.textContent = tactic.name;
+  col.appendChild(head);
+  const grid = document.createElement('div'); grid.className='cell-grid';
+  (tactic.techniques || []).forEach(tech => {
+    const c = document.createElement('div'); c.className='cell';
+    c.innerHTML = '<div class="title">' + tech.name + '</div><div class="meta">' + (tech.affected || []).join(', ') + '</div>';
+    c.onclick = async ()=> {
+      // open modal with playbook content
+      const pb = await fetchPlaybook(tech.id);
+      document.getElementById('modal-title').textContent = tech.name;
+      document.getElementById('modal-meta').textContent = (tech.description || '') + ' • Affected: ' + ((tech.affected || []).join(', '));
+      const links = document.getElementById('modal-links');
+      links.innerHTML = '';
+      // add mitigation tags
+      (tech.mitigations || tech.mitigation || []).forEach(m=>{ const s = document.createElement('span'); s.className='tag'; s.textContent = m; links.appendChild(s)});
+      if(pb){
+        // render markdown to HTML
+        document.getElementById('modal-content').innerHTML = md2html(pb);
+      } else {
+        // if no playbook file, generate a quick playbook from technique object
+        const quick = ['## Quick Playbook','**Description**','\n'+(tech.description||tech.name),'','**Mitigations**','\n'+((tech.mitigations||[]).join(', '))].join('\n\n');
+        document.getElementById('modal-content').innerHTML = md2html(quick);
+      }
+      document.getElementById('backdrop').style.display='flex';
+      document.getElementById('backdrop').setAttribute('aria-hidden','false');
+    };
+    grid.appendChild(c);
+  });
+  col.appendChild(grid);
+  return col;
+}
+
+async function load(){
+  let mapping = null;
+  try{
+    const res = await fetch('mapping.json', { cache: 'no-store' });
+    mapping = await res.json();
+  }catch(e){
+    mapping = { tactics: [] };
   }
+  const matrix = document.getElementById('matrix');
+  matrix.innerHTML = '';
+  (mapping.tactics || []).forEach(t => {
+    matrix.appendChild(createColumn(t));
+  });
 
-  function renderMatrix(mapping){
-    const container = document.getElementById('matrix');
-    container.innerHTML = '';
-    if(!mapping.tactics || mapping.tactics.length===0){
-      container.textContent = 'No tactics found in mapping.json';
+  // filter logic
+  const q = document.getElementById('q');
+  q.oninput = ()=>{
+    const qv = q.value.trim().toLowerCase();
+    if(!qv){
+      matrix.innerHTML=''; (mapping.tactics||[]).forEach(t=>matrix.appendChild(createColumn(t)));
       return;
     }
-    mapping.tactics.forEach((t,i)=>{
-      container.appendChild(createColumn(t,i));
-    });
-  }
+    const filtered = (mapping.tactics||[]).map(t=>{
+      const techs = (t.techniques||[]).filter(tc => tc.name.toLowerCase().includes(qv) || (tc.affected||[]).join(' ').toLowerCase().includes(qv) || (tc.id||'').includes(qv));
+      return { name: t.name, techniques: techs };
+    }).filter(t=>t.techniques.length>0);
+    matrix.innerHTML=''; filtered.forEach(t=>matrix.appendChild(createColumn(t)));
+  };
+}
 
-  function showTech(tech){
-    const panel = document.getElementById('panel');
-    document.getElementById('panel-title').textContent = tech.name;
-    document.getElementById('panel-desc').textContent = tech.description || '';
-    const af = document.getElementById('panel-affected');
-    af.innerHTML = '';
-    (tech.affected || []).forEach(a=>{
-      const s = document.createElement('span'); s.className='tag'; s.textContent=a; af.appendChild(s);
-    });
-    const mg = document.getElementById('panel-mitigations');
-    mg.innerHTML=''; (tech.mitigations || tech.mitigation || []).forEach(m=>{ const s=document.createElement('span'); s.className='tag'; s.textContent=m; mg.appendChild(s)});
-    document.getElementById('panel-evidence').textContent = tech.evidence || '';
-    document.getElementById('panel-raw').textContent = JSON.stringify(tech, null, 2);
-    // Playbook link
-    const pb = document.getElementById('panel-playbook');
-    const fname = tech.id + '.md';
-    fetch('playbooks/' + fname, { method: 'HEAD' }).then(r=>{
-      if(r && r.ok){
-        pb.href = 'playbooks/' + fname; pb.style.display='inline-block';
-      } else {
-        pb.style.display='none';
-      }
-    }).catch(()=>{ pb.style.display='none' });
-    panel.style.display='block'; panel.setAttribute('aria-hidden','false');
-    if(window.innerWidth < 900){
-      panel.scrollIntoView({behavior:'smooth'});
-    }
-  }
+document.getElementById('closeBtn').onclick = ()=>{ document.getElementById('backdrop').style.display='none'; document.getElementById('backdrop').setAttribute('aria-hidden','true'); }
+document.getElementById('backdrop').onclick = (e)=>{ if(e.target.id==='backdrop'){ document.getElementById('backdrop').style.display='none'; document.getElementById('backdrop').setAttribute('aria-hidden','true'); } }
 
-  function applyFilter(q, mapping){
-    if(!q) return mapping;
-    q = q.toLowerCase();
-    const filtered = { tactics: [] };
-    mapping.tactics.forEach(t=>{
-      const techs = (t.techniques||[]).filter(tc => tc.name.toLowerCase().includes(q) || (tc.id||'').toLowerCase().includes(q) || (tc.affected||[]).join(' ').toLowerCase().includes(q));
-      if(t.name.toLowerCase().includes(q) || techs.length>0){
-        const copy = Object.assign({}, t); copy.techniques = techs.length>0 ? techs : t.techniques; filtered.tactics.push(copy);
-      }
-    });
-    return filtered;
-  }
-
-  (async ()=>{
-    const mapping = await loadMapping();
-    renderMatrix(mapping);
-    const q = document.getElementById('q');
-    q.oninput = ()=>{
-      const fm = applyFilter(q.value, mapping);
-      renderMatrix(fm);
-    };
-  })();
+load();
 </script>
 </body>
 </html>
