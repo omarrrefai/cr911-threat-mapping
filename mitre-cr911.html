@@ -3,13 +3,10 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>MiTRE-CR911 — ATT&CK-style Matrix</title>
+<title>MiTRE-CR911 — ATT&CK-style Matrix (No Duplicates)</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap">
 <style>
-  :root{
-    --bg:#061226; --panel:#0b1624; --muted:#9fb0c9; --accent:#00d9a3; --card:#0f2230;
-    --cell-border: rgba(255,255,255,0.04);
-  }
+  :root{ --bg:#061226; --panel:#0b1624; --muted:#9fb0c9; --accent:#00d9a3; --card:#0f2230; --cell-border: rgba(255,255,255,0.04); }
   *{box-sizing:border-box}
   body{margin:0;background:linear-gradient(180deg,#031028 0%,#061428 100%);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial;color:#e6eef8}
   header{padding:28px 32px;display:flex;align-items:center;gap:16px}
@@ -18,15 +15,15 @@
   .controls{display:flex;gap:12px;align-items:center;margin-bottom:12px}
   .search{padding:10px 12px;border-radius:10px;border:0;background:#042034;color:#cfe8ff;min-width:260px}
   .matrix-table{display:flex;gap:12px;align-items:flex-start;overflow:auto;padding-bottom:8px}
-  .column{min-width:220px;background:transparent;border-radius:8px;padding:6px;flex:0 0 220px}
+  .column{min-width:260px;background:transparent;border-radius:8px;padding:6px;flex:0 0 260px}
   .col-head{background:linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.02));padding:10px;border-radius:8px;border:1px solid var(--cell-border);font-weight:700;color:var(--accent);font-size:14px;text-align:center}
   .cell-grid{margin-top:8px;display:flex;flex-direction:column;gap:8px}
-  .cell{background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.02);cursor:pointer;transition:transform .12s,box-shadow .12s}
+  .cell{background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.02);cursor:pointer;transition:transform .12s,box-shadow .12s}
   .cell:hover{transform:translateY(-4px);box-shadow:0 12px 36px rgba(0,0,0,0.6)}
   .cell .title{font-weight:600;font-size:13px}
   .cell .meta{font-size:12px;color:var(--muted);margin-top:6px}
   .modal-backdrop{position:fixed;left:0;top:0;right:0;bottom:0;background:rgba(1,8,14,0.6);display:none;align-items:center;justify-content:center;padding:20px;z-index:40}
-  .modal{background:#041825;border-radius:12px;padding:18px;max-width:900px;width:100%;max-height:86vh;overflow:auto;border:1px solid rgba(255,255,255,0.04)}
+  .modal{background:#041825;border-radius:12px;padding:18px;max-width:960px;width:100%;max-height:86vh;overflow:auto;border:1px solid rgba(255,255,255,0.04)}
   .modal h2{margin:0 0 8px;color:var(--accent)}
   .modal .meta{color:var(--muted);font-size:13px;margin-bottom:8px}
   .close-btn{float:right;background:transparent;border:0;color:var(--muted);font-size:18px;cursor:pointer;padding:6px}
@@ -35,8 +32,7 @@
   .tag{display:inline-block;background:rgba(255,255,255,0.03);padding:6px 8px;border-radius:8px;color:var(--muted);font-size:12px;margin-right:6px;margin-top:6px}
   .links{margin-top:12px}
   .btn{display:inline-block;padding:8px 10px;border-radius:8px;background:#072432;border:1px solid rgba(255,255,255,0.03);color:#bfefff;text-decoration:none}
-  footer{max-width:1200px;margin:20px auto 60px;padding:0 20px;color:var(--muted);font-size:13px}
-  @media(max-width:1000px){ .matrix-table{flex-wrap:nowrap} .modal{max-width:100%} }
+  .footer{max-width:1200px;margin:20px auto 60px;padding:0 20px;color:var(--muted);font-size:13px}
 </style>
 </head>
 <body>
@@ -46,8 +42,8 @@
     <path d="M6 12h12M12 6v12" stroke="#00d9a3" stroke-width="1.6" stroke-linecap="round"/>
   </svg>
   <div>
-    <h1>MiTRE-CR911 — ATT&CK-style Matrix</h1>
-    <div style="color:#9fb0c9;font-size:13px">Columns = tactics. Click a technique to open a presentable playbook (rendered HTML).</div>
+    <h1>MiTRE-CR911 — ATT&CK-style Matrix (No Duplicates)</h1>
+    <div style="color:#9fb0c9;font-size:13px">Columns = tactics. Click a technique to open its playbook (MD if available; otherwise generated).</div>
   </div>
 </header>
 
@@ -57,63 +53,103 @@
     <a class="btn" href="index.html">Home</a>
     <a class="btn" href="playbooks/index.html">Playbooks</a>
   </div>
-
   <div class="matrix-table" id="matrix"></div>
 </div>
 
 <div id="backdrop" class="modal-backdrop" role="dialog" aria-hidden="true">
   <div class="modal" role="document" aria-modal="true">
     <button class="close-btn" id="closeBtn" aria-label="Close">&times;</button>
-    <h2 id="modal-title">Playbook</h2>
+    <h2 id="modal-title">Technique Playbook</h2>
     <div class="meta" id="modal-meta"></div>
     <div class="links" id="modal-links"></div>
     <div class="playbook-content" id="modal-content"></div>
   </div>
 </div>
 
-<footer>MiTRE-CR911 — Editable mapping.json is the single source of truth. Keep evidence private if needed.</footer>
+<div class="footer">MiTRE-CR911 — Editable <code>mapping.json</code> is the single source of truth. Keep evidence private if needed.</div>
 
 <script>
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
 function md2html(md){
   md = md.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
-  md = md.replace(/```([\s\S]*?)```/g, function(m, p1){ return '<pre>' + p1 + '</pre>'; });
-  md = md.replace(/^### (.*$)/gim, '<h3>$1</h3>');
-  md = md.replace(/^## (.*$)/gim, '<h2>$1</h2>');
-  md = md.replace(/^# (.*$)/gim, '<h1>$1</h1>');
-  md = md.replace(/\*\*(.*?)\*\*/gim, '<strong>$1</strong>');
-  md = md.replace(/\[(.*?)\]\((.*?)\)/gim, '<a href="$2" target="_blank" rel="noopener">$1</a>');
-  md = md.replace(/^\s*[-*] (.*)/gim, '<li>$1</li>');
-  md = md.replace(/(<li>[\s\S]*?<\/li>)(?![\s\S]*<li>)/g, function(m){ return '<ul>' + m + '</ul>'; });
-  md = md.split(/\n\n+/).map(function(para){ if(para.match(/^<h|^<ul|^<pre/)) return para; return '<p>' + para.replace(/\n/g,'<br/>') + '</p>'; }).join('\n');
+  md = md.replace(/```([\s\S]*?)```/g, (_,code)=>'<pre>'+code+'</pre>');
+  md = md.replace(/^### (.*)$/gim,'<h3>$1</h3>');
+  md = md.replace(/^## (.*)$/gim,'<h2>$1</h2>');
+  md = md.replace(/^# (.*)$/gim,'<h1>$1</h1>');
+  md = md.replace(/\*\*(.*?)\*\*/gim,'<strong>$1</strong>');
+  md = md.replace(/\[(.*?)\]\((.*?)\)/gim,'<a href="$2" target="_blank" rel="noopener">$1</a>');
+  md = md.replace(/^\s*[-*] (.*)$/gim,'<li>$1</li>');
+  md = md.replace(/(?:^|\n)(<li>[\s\S]*?<\/li>)(?=\n(?!<li>)|$)/g,'<ul>$1</ul>');
+  md = md.split(/\n\n+/).map(p=>/^<h|^<ul|^<pre/.test(p)?p:'<p>'+p.replace(/\n/g,'<br/>')+'</p>').join('\n');
   return md;
 }
 
-async function fetchPlaybook(id){
+function buildPlaybookFromTech(tactic, tech){
+  const lines = [];
+  lines.push('<h3>Summary</h3>');
+  lines.push('<p><strong>Tactic:</strong> '+esc(tactic.name)+' • <strong>Technique ID:</strong> '+esc(tech.id)+'</p>');
+  if(tech.description) lines.push('<p>'+esc(tech.description)+'</p>');
+  lines.push('<h3>Affected Functional Elements</h3><p>'+esc((tech.affected||[]).join(', '))+'</p>');
+  lines.push('<h3>Mitigations</h3><p>'+esc((tech.mitigations||tech.mitigation||[]).join(', '))+'</p>');
+  lines.push('<h3>Evidence</h3><p style="color:var(--muted)">'+esc(tech.evidence||'(none)')+'</p>');
+  lines.push('<h3>Detection & Telemetry</h3>');
+  const id=tech.id||''; let signals=[];
+  if(['lis_impersonation','lis_data_tamper','data_exfil_lis'].includes(id)){
+    signals=['Certificate or signer mismatch for PIDF-LO/location tokens','Unusual LVF query failures or revalidations for same call','Sudden change in location-by-value vs location-by-reference','Spikes in LIS queries from atypical clients'];
+  }else if(['tdos_sip_flood','caller_id_spoof','lis_query_flood'].includes(id)){
+    signals=['Sharp increase in SIP INVITEs from few source IPs/ASNs','Queue depth/abandonment spikes at PSAP','Rate-limit counters triggering at BCF/edge','Repeated invalid/failed STIR/SHAKEN attestations'];
+  }else if(['lvf_gis_poison'].includes(id)){
+    signals=['LVF validation failures after data updates','Hash/version drift between prod and golden GIS snapshots','Unauthorized write events to LVF/GIS repos'];
+  }else if(['legacy_protocol_injection','rtp_injection'].includes(id)){
+    signals=['Protocol conformance violations at LNG/LPG','RTP/SRTP negotiation anomalies','Unexpected codec/SDP attributes or malformed frames'];
+  }else if(['sw_bugs_esrp','protocol_downgrade'].includes(id)){
+    signals=['Crashes/restarts in ESRP/ECRF/LIS','TLS handshake failures or downgraded ciphers','WAF/IDS signatures for CVEs on NG components'];
+  }else{
+    signals=['Anomalous auth/config changes or request/response patterns','Error-rate spikes, latency changes, or throughput anomalies'];
+  }
+  lines.push('<ul>'+signals.map(s=>'<li>'+esc(s)+'</li>').join('')+'</ul>');
+  lines.push('<h3>Triage</h3><ul><li>Scope impacted elements/paths</li><li>Check past 24h vs 7d trend</li><li>Validate certs, endpoint IDs, rate anomalies, schema violations</li></ul>');
+  lines.push('<h3>Containment</h3><ul><li>Block/rate-limit at BCF/edge</li><li>Quarantine nodes; failover</li><li>Disable compromised creds; rotate keys</li></ul>');
+  lines.push('<h3>Eradication</h3><ul><li>Patch/reconfigure</li><li>Rebuild if integrity uncertain</li><li>Restore validated LVF/GIS datasets</li></ul>');
+  lines.push('<h3>Recovery</h3><ul><li>Reintroduce traffic under monitoring</li><li>Verify origination→BCF→ESRP→ECRF/LVF→PSAP flows</li><li>Post-incident review</li></ul>');
+  lines.push('<h3>Metrics/KPIs</h3><ul><li>MTTD, MTTC, MTTR</li><li>False positives</li><li>% endpoints with mTLS/STIR-SHAKEN</li></ul>');
+  return lines.join('\n');
+}
+
+// Prefer MD if present; otherwise use generated from mapping
+async function getPlaybookContent(tactic, tech){
   try{
-    const res = await fetch('playbooks/' + id + '.md', { cache: 'no-store' });
-    if(!res.ok) throw new Error('not found');
-    return await res.text();
-  }catch(e){ return null; }
+    const res = await fetch('playbooks/' + tech.id + '.md', { cache: 'no-store' });
+    if(res.ok){
+      const md = await res.text();
+      if(md && md.trim().length > 0){
+        return md2html(md); // render pretty
+      }
+    }
+  }catch(e){}
+  return buildPlaybookFromTech(tactic, tech);
+}
+
+function createCell(tech){
+  const c=document.createElement('div'); c.className='cell'; c.dataset.techId=tech.id;
+  c.innerHTML='<div class="title">'+esc(tech.name)+'</div><div class="meta">'+esc((tech.affected||[]).join(', '))+'</div>';
+  return c;
 }
 
 function createColumn(tactic){
-  const col = document.createElement('div'); col.className='column';
-  const head = document.createElement('div'); head.className='col-head'; head.textContent = tactic.name;
-  col.appendChild(head);
-  const grid = document.createElement('div'); grid.className='cell-grid';
-  (tactic.techniques || []).forEach(tech => {
-    const c = document.createElement('div'); c.className='cell';
-    c.innerHTML = '<div class="title">' + tech.name + '</div><div class="meta">' + (tech.affected || []).join(', ') + '</div>';
-    c.onclick = async ()=> {
-      const pb = await fetchPlaybook(tech.id);
-      document.getElementById('modal-title').textContent = tech.name;
-      document.getElementById('modal-meta').textContent = (tech.description||'') + ' • Affected: ' + ((tech.affected||[]).join(', '));
-      const links = document.getElementById('modal-links'); links.innerHTML='';
-      (tech.mitigations||tech.mitigation||[]).forEach(m=>{ const s=document.createElement('span'); s.className='tag'; s.textContent=m; links.appendChild(s)});
-      if(pb){ document.getElementById('modal-content').innerHTML = md2html(pb); }
-      else { const quick = ['## Quick Playbook','**Description**','\n'+(tech.description||tech.name),'','**Mitigations**','\n'+((tech.mitigations||[]).join(', '))].join('\n\n'); document.getElementById('modal-content').innerHTML = md2html(quick); }
-      document.getElementById('backdrop').style.display='flex';
-      document.getElementById('backdrop').setAttribute('aria-hidden','false');
+  const col=document.createElement('div'); col.className='column';
+  const head=document.createElement('div'); head.className='col-head'; head.textContent=tactic.name; col.appendChild(head);
+  const grid=document.createElement('div'); grid.className='cell-grid';
+  (tactic.techniques||[]).forEach(tech=>{
+    const c=createCell(tech);
+    c.onclick=async ()=>{
+      document.getElementById('modal-title').textContent=tech.name+' ('+tech.id+')';
+      document.getElementById('modal-meta').textContent='Tactic: '+tactic.name;
+      document.getElementById('modal-links').innerHTML='';
+      const html=await getPlaybookContent(tactic, tech);
+      document.getElementById('modal-content').innerHTML=html;
+      const bd=document.getElementById('backdrop'); bd.style.display='flex'; bd.setAttribute('aria-hidden','false');
     };
     grid.appendChild(c);
   });
@@ -122,23 +158,22 @@ function createColumn(tactic){
 }
 
 async function load(){
-  let mapping = null;
-  try{ const res = await fetch('mapping.json', { cache:'no-store'}); mapping = await res.json(); }
-  catch(e){ mapping={tactics:[]}; }
-  const matrix = document.getElementById('matrix'); matrix.innerHTML='';
-  (mapping.tactics||[]).forEach(t=>{ matrix.appendChild(createColumn(t)); });
-  const q = document.getElementById('q');
+  let mapping={tactics:[]};
+  try{ const r=await fetch('mapping.json',{cache:'no-store'}); mapping=await r.json(); } catch(e){}
+  const matrix=document.getElementById('matrix'); matrix.innerHTML='';
+  (mapping.tactics||[]).forEach(t=>matrix.appendChild(createColumn(t)));
+  const q=document.getElementById('q');
   q.oninput=()=>{
     const qv=q.value.trim().toLowerCase();
-    if(!qv){ matrix.innerHTML=''; (mapping.tactics||[]).forEach(t=>matrix.appendChild(createColumn(t))); return;}
-    const filtered=(mapping.tactics||[]).map(t=>{ const techs=(t.techniques||[]).filter(tc=>tc.name.toLowerCase().includes(qv)||(tc.affected||[]).join(' ').toLowerCase().includes(qv)||(tc.id||'').includes(qv)); return {name:t.name,techniques:techs}; }).filter(t=>t.techniques.length>0);
+    const filtered=(mapping.tactics||[]).map(t=>{
+      const techs=(t.techniques||[]).filter(tc=>tc.name.toLowerCase().includes(qv)||(tc.id||'').toLowerCase().includes(qv)||(tc.affected||[]).join(' ').toLowerCase().includes(qv));
+      return {name:t.name, techniques:techs};
+    }).filter(t=>t.techniques.length>0);
     matrix.innerHTML=''; filtered.forEach(t=>matrix.appendChild(createColumn(t)));
   };
 }
-
-document.getElementById('closeBtn').onclick=()=>{ document.getElementById('backdrop').style.display='none'; document.getElementById('backdrop').setAttribute('aria-hidden','true'); }
-document.getElementById('backdrop').onclick=(e)=>{ if(e.target.id==='backdrop'){ document.getElementById('backdrop').style.display='none'; document.getElementById('backdrop').setAttribute('aria-hidden','true'); } }
-
+document.getElementById('closeBtn').onclick=()=>{ const bd=document.getElementById('backdrop'); bd.style.display='none'; bd.setAttribute('aria-hidden','true'); };
+document.getElementById('backdrop').onclick=(e)=>{ if(e.target.id==='backdrop'){ const bd=document.getElementById('backdrop'); bd.style.display='none'; bd.setAttribute('aria-hidden','true'); }};
 load();
 </script>
 </body>
