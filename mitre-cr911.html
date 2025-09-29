@@ -61,7 +61,6 @@
   <div class="matrix-table" id="matrix"></div>
 </div>
 
-<!-- modal -->
 <div id="backdrop" class="modal-backdrop" role="dialog" aria-hidden="true">
   <div class="modal" role="document" aria-modal="true">
     <button class="close-btn" id="closeBtn" aria-label="Close">&times;</button>
@@ -75,28 +74,17 @@
 <footer>MiTRE-CR911 — Editable mapping.json is the single source of truth. Keep evidence private if needed.</footer>
 
 <script>
-// Very small markdown -> HTML (handles headings, bold, lists, code blocks, paragraphs, links)
 function md2html(md){
-  // Escape HTML first
   md = md.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
-  // Code blocks ```
-  md = md.replace(/```([\s\S]*?)```/g, function(m, p1){ return '<pre>' + p1.replace(/&lt;br&gt;/g,'<br>') + '</pre>'; });
-  // Headings
+  md = md.replace(/```([\s\S]*?)```/g, function(m, p1){ return '<pre>' + p1 + '</pre>'; });
   md = md.replace(/^### (.*$)/gim, '<h3>$1</h3>');
   md = md.replace(/^## (.*$)/gim, '<h2>$1</h2>');
   md = md.replace(/^# (.*$)/gim, '<h1>$1</h1>');
-  // Bold **
   md = md.replace(/\*\*(.*?)\*\*/gim, '<strong>$1</strong>');
-  // Links [text](url)
   md = md.replace(/\[(.*?)\]\((.*?)\)/gim, '<a href="$2" target="_blank" rel="noopener">$1</a>');
-  // Lists
   md = md.replace(/^\s*[-*] (.*)/gim, '<li>$1</li>');
   md = md.replace(/(<li>[\s\S]*?<\/li>)(?![\s\S]*<li>)/g, function(m){ return '<ul>' + m + '</ul>'; });
-  // Paragraphs
-  md = md.split(/\n\n+/).map(function(para){
-    if(para.match(/^<h|^<ul|^<pre/)) return para;
-    return '<p>' + para.replace(/\n/g,'<br/>') + '</p>';
-  }).join('\n');
+  md = md.split(/\n\n+/).map(function(para){ if(para.match(/^<h|^<ul|^<pre/)) return para; return '<p>' + para.replace(/\n/g,'<br/>') + '</p>'; }).join('\n');
   return md;
 }
 
@@ -104,11 +92,8 @@ async function fetchPlaybook(id){
   try{
     const res = await fetch('playbooks/' + id + '.md', { cache: 'no-store' });
     if(!res.ok) throw new Error('not found');
-    const text = await res.text();
-    return text;
-  }catch(e){
-    return null;
-  }
+    return await res.text();
+  }catch(e){ return null; }
 }
 
 function createColumn(tactic){
@@ -120,22 +105,13 @@ function createColumn(tactic){
     const c = document.createElement('div'); c.className='cell';
     c.innerHTML = '<div class="title">' + tech.name + '</div><div class="meta">' + (tech.affected || []).join(', ') + '</div>';
     c.onclick = async ()=> {
-      // open modal with playbook content
       const pb = await fetchPlaybook(tech.id);
       document.getElementById('modal-title').textContent = tech.name;
-      document.getElementById('modal-meta').textContent = (tech.description || '') + ' • Affected: ' + ((tech.affected || []).join(', '));
-      const links = document.getElementById('modal-links');
-      links.innerHTML = '';
-      // add mitigation tags
-      (tech.mitigations || tech.mitigation || []).forEach(m=>{ const s = document.createElement('span'); s.className='tag'; s.textContent = m; links.appendChild(s)});
-      if(pb){
-        // render markdown to HTML
-        document.getElementById('modal-content').innerHTML = md2html(pb);
-      } else {
-        // if no playbook file, generate a quick playbook from technique object
-        const quick = ['## Quick Playbook','**Description**','\n'+(tech.description||tech.name),'','**Mitigations**','\n'+((tech.mitigations||[]).join(', '))].join('\n\n');
-        document.getElementById('modal-content').innerHTML = md2html(quick);
-      }
+      document.getElementById('modal-meta').textContent = (tech.description||'') + ' • Affected: ' + ((tech.affected||[]).join(', '));
+      const links = document.getElementById('modal-links'); links.innerHTML='';
+      (tech.mitigations||tech.mitigation||[]).forEach(m=>{ const s=document.createElement('span'); s.className='tag'; s.textContent=m; links.appendChild(s)});
+      if(pb){ document.getElementById('modal-content').innerHTML = md2html(pb); }
+      else { const quick = ['## Quick Playbook','**Description**','\n'+(tech.description||tech.name),'','**Mitigations**','\n'+((tech.mitigations||[]).join(', '))].join('\n\n'); document.getElementById('modal-content').innerHTML = md2html(quick); }
       document.getElementById('backdrop').style.display='flex';
       document.getElementById('backdrop').setAttribute('aria-hidden','false');
     };
@@ -147,36 +123,21 @@ function createColumn(tactic){
 
 async function load(){
   let mapping = null;
-  try{
-    const res = await fetch('mapping.json', { cache: 'no-store' });
-    mapping = await res.json();
-  }catch(e){
-    mapping = { tactics: [] };
-  }
-  const matrix = document.getElementById('matrix');
-  matrix.innerHTML = '';
-  (mapping.tactics || []).forEach(t => {
-    matrix.appendChild(createColumn(t));
-  });
-
-  // filter logic
+  try{ const res = await fetch('mapping.json', { cache:'no-store'}); mapping = await res.json(); }
+  catch(e){ mapping={tactics:[]}; }
+  const matrix = document.getElementById('matrix'); matrix.innerHTML='';
+  (mapping.tactics||[]).forEach(t=>{ matrix.appendChild(createColumn(t)); });
   const q = document.getElementById('q');
-  q.oninput = ()=>{
-    const qv = q.value.trim().toLowerCase();
-    if(!qv){
-      matrix.innerHTML=''; (mapping.tactics||[]).forEach(t=>matrix.appendChild(createColumn(t)));
-      return;
-    }
-    const filtered = (mapping.tactics||[]).map(t=>{
-      const techs = (t.techniques||[]).filter(tc => tc.name.toLowerCase().includes(qv) || (tc.affected||[]).join(' ').toLowerCase().includes(qv) || (tc.id||'').includes(qv));
-      return { name: t.name, techniques: techs };
-    }).filter(t=>t.techniques.length>0);
+  q.oninput=()=>{
+    const qv=q.value.trim().toLowerCase();
+    if(!qv){ matrix.innerHTML=''; (mapping.tactics||[]).forEach(t=>matrix.appendChild(createColumn(t))); return;}
+    const filtered=(mapping.tactics||[]).map(t=>{ const techs=(t.techniques||[]).filter(tc=>tc.name.toLowerCase().includes(qv)||(tc.affected||[]).join(' ').toLowerCase().includes(qv)||(tc.id||'').includes(qv)); return {name:t.name,techniques:techs}; }).filter(t=>t.techniques.length>0);
     matrix.innerHTML=''; filtered.forEach(t=>matrix.appendChild(createColumn(t)));
   };
 }
 
-document.getElementById('closeBtn').onclick = ()=>{ document.getElementById('backdrop').style.display='none'; document.getElementById('backdrop').setAttribute('aria-hidden','true'); }
-document.getElementById('backdrop').onclick = (e)=>{ if(e.target.id==='backdrop'){ document.getElementById('backdrop').style.display='none'; document.getElementById('backdrop').setAttribute('aria-hidden','true'); } }
+document.getElementById('closeBtn').onclick=()=>{ document.getElementById('backdrop').style.display='none'; document.getElementById('backdrop').setAttribute('aria-hidden','true'); }
+document.getElementById('backdrop').onclick=(e)=>{ if(e.target.id==='backdrop'){ document.getElementById('backdrop').style.display='none'; document.getElementById('backdrop').setAttribute('aria-hidden','true'); } }
 
 load();
 </script>
