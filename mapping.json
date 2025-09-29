@@ -1,0 +1,340 @@
+{
+  "meta": {
+    "name": "MiTRE-CR911",
+    "version": "2025-09-29",
+    "sources": [
+      {
+        "id": "ThreatModel",
+        "path": "evidence/Updated - NG911 Threat Modeling and Risk Assessment - 4.1.docx"
+      },
+      {
+        "id": "NENA-i3",
+        "path": "evidence/nena-sta-010.3d-2021_i3_stan.pdf"
+      },
+      {
+        "id": "NG-SEC",
+        "path": "evidence/STA-040.2-2024_SecurityforNG.pdf"
+      }
+    ]
+  },
+  "tactics": [
+    {
+      "id": "initial_access",
+      "name": "Initial Access",
+      "description": "Gaining an initial foothold into NG911 or PSAP systems (phishing, stolen creds, compromised supplier).",
+      "techniques": [
+        {
+          "id": "phishing_workstation",
+          "name": "Phishing \u2192 workstation compromise",
+          "affected": [
+            "PSAP",
+            "IT_NETWORK"
+          ],
+          "mitigations": [
+            "MFA",
+            "EDR",
+            "phishing_training",
+            "segmentation",
+            "backups"
+          ],
+          "evidence": "\ue200filecite\ue202turn2file3\ue202L11-L16\ue201"
+        },
+        {
+          "id": "supply_chain_component",
+          "name": "Compromised vendor firmware/software",
+          "affected": [
+            "ESInet",
+            "NGCS",
+            "LIS",
+            "ESRP"
+          ],
+          "mitigations": [
+            "SBOM",
+            "vendor-security-checks",
+            "version_lifecycle_monitoring",
+            "code_signing"
+          ],
+          "evidence": "\ue200filecite\ue202turn2file14\ue202L43-L56\ue201"
+        }
+      ]
+    },
+    {
+      "id": "spoofing",
+      "name": "Spoofing / Identity Deception",
+      "description": "Impersonation of components, caller identity spoofing, fake PIDF-LO.",
+      "techniques": [
+        {
+          "id": "lis_impersonation",
+          "name": "LIS impersonation / fake PIDF-LO",
+          "affected": [
+            "LIS",
+            "LVF",
+            "ECRF",
+            "PSAP"
+          ],
+          "mitigations": [
+            "mTLS",
+            "JWS_signing",
+            "certificate_validation",
+            "mutual_authentication",
+            "strict_endpoint_whitelists"
+          ],
+          "evidence": "\ue200filecite\ue202turn2file1\ue202L49-L52\ue201"
+        },
+        {
+          "id": "caller_id_spoof",
+          "name": "Caller ID / SIP identity spoofing (SIP INVITE manipulation)",
+          "affected": [
+            "BCF",
+            "ESRP",
+            "BCF(Egress)",
+            "PSAP"
+          ],
+          "mitigations": [
+            "STIR_SHAKEN",
+            "BCF_ingress_validation",
+            "SIP_HEADER_VALIDATION",
+            "rate_limiting"
+          ],
+          "evidence": "\ue200filecite\ue202turn2file9\ue202L27-L33\ue201"
+        }
+      ]
+    },
+    {
+      "id": "tampering",
+      "name": "Tampering / Data Manipulation",
+      "techniques": [
+        {
+          "id": "lvf_gis_poison",
+          "name": "LVF / GIS data tampering (poisoning)",
+          "affected": [
+            "LVF",
+            "ECRF",
+            "PRF"
+          ],
+          "mitigations": [
+            "version_management",
+            "integrity_checks",
+            "access_control",
+            "auditing",
+            "data_signing"
+          ],
+          "evidence": "\ue200filecite\ue202turn2file12\ue202L15-L19\ue201"
+        },
+        {
+          "id": "lis_data_tamper",
+          "name": "Location data manipulation or insertion",
+          "affected": [
+            "LIS",
+            "ECRF",
+            "PSAP"
+          ],
+          "mitigations": [
+            "access_control",
+            "JWS_location_signatures",
+            "LVF_validation",
+            "query_rate_limit"
+          ],
+          "evidence": "\ue200filecite\ue202turn2file8\ue202L9-L16\ue201"
+        }
+      ]
+    },
+    {
+      "id": "denial",
+      "name": "Denial / Disruption",
+      "techniques": [
+        {
+          "id": "tdos_sip_flood",
+          "name": "Telephone Denial of Service (TDoS) / SIP flood",
+          "affected": [
+            "BCF",
+            "ESRP",
+            "BCF(ingress)",
+            "PSAP",
+            "LPG"
+          ],
+          "mitigations": [
+            "rate_limiting",
+            "upstream_filtering",
+            "call_filtering_tools",
+            "scrubbing_services",
+            "capacity_planning"
+          ],
+          "evidence": "\ue200filecite\ue202turn2file5\ue202L41-L46\ue201"
+        },
+        {
+          "id": "lis_query_flood",
+          "name": "Query flooding (LIS or LVF DOS)",
+          "affected": [
+            "LIS",
+            "LVF",
+            "ECRF"
+          ],
+          "mitigations": [
+            "redundancy",
+            "rate_limit",
+            "input_validation",
+            "monitoring"
+          ],
+          "evidence": "\ue200filecite\ue202turn2file8\ue202L15-L16\ue201"
+        },
+        {
+          "id": "lpg_isolation",
+          "name": "DoS-induced isolation of legacy PSAPs (LPG failure)",
+          "affected": [
+            "LPG",
+            "LNG",
+            "PSAP"
+          ],
+          "mitigations": [
+            "redundant_LPGs",
+            "secure_config",
+            "monitoring",
+            "fallback_routes"
+          ],
+          "evidence": "\ue200filecite\ue202turn2file13\ue202L51-L55\ue201"
+        }
+      ]
+    },
+    {
+      "id": "exfiltration",
+      "name": "Collection / Exfiltration",
+      "techniques": [
+        {
+          "id": "data_exfil_lis",
+          "name": "Exfiltrate caller location or call logs",
+          "affected": [
+            "LIS",
+            "PSAP_BACKEND",
+            "LOGGING_SERVICE"
+          ],
+          "mitigations": [
+            "encryption_at_rest",
+            "rbac",
+            "audit_logging",
+            "anomaly_detection"
+          ],
+          "evidence": "\ue200filecite\ue202turn2file8\ue202L13-L16\ue201"
+        }
+      ]
+    },
+    {
+      "id": "vuln_exploit",
+      "name": "Vulnerability Exploitation",
+      "techniques": [
+        {
+          "id": "sw_bugs_esrp",
+          "name": "Exploit software bug in ESRP / ECRF / LIS",
+          "affected": [
+            "ESRP",
+            "ECRF",
+            "LIS",
+            "LVF"
+          ],
+          "mitigations": [
+            "patch_management",
+            "secure_code_review",
+            "vuln_scanning",
+            "runtime_monitoring"
+          ],
+          "evidence": "\ue200filecite\ue202turn2file10\ue202L19-L29\ue201"
+        },
+        {
+          "id": "protocol_downgrade",
+          "name": "TLS / protocol downgrade & insecure protocol usage",
+          "affected": [
+            "ALL_ESINET_SERVICES"
+          ],
+          "mitigations": [
+            "TLS_1.2+_with_PFS",
+            "deprecate_tls10_11",
+            "cipher_hardening"
+          ],
+          "evidence": "\ue200filecite\ue202turn2file14\ue202L1-L9\ue201"
+        }
+      ]
+    },
+    {
+      "id": "protocol_interop",
+      "name": "Protocol / Interop Abuse",
+      "techniques": [
+        {
+          "id": "legacy_protocol_injection",
+          "name": "Legacy traffic injection via LNG",
+          "affected": [
+            "LNG",
+            "LPG",
+            "ESInet"
+          ],
+          "mitigations": [
+            "protocol_conformance_checks",
+            "input_validation",
+            "endpoint_whitelist",
+            "STIR_SHAKEN_where_applicable"
+          ],
+          "evidence": "\ue200filecite\ue202turn2file13\ue202L25-L37\ue201"
+        },
+        {
+          "id": "rtp_injection",
+          "name": "Unsecured RTP bridging & media path compromise",
+          "affected": [
+            "LPG",
+            "PSAP",
+            "LOGGING_SERVICE"
+          ],
+          "mitigations": [
+            "SRTP",
+            "SRTCP",
+            "media_encryption",
+            "logging_security"
+          ],
+          "evidence": "\ue200filecite\ue202turn2file13\ue202L69-L79\ue201"
+        }
+      ]
+    },
+    {
+      "id": "insider",
+      "name": "Insider / Misconfiguration",
+      "techniques": [
+        {
+          "id": "misconfig_admin",
+          "name": "Misconfiguration or human error (admin mistake)",
+          "affected": [
+            "ALL_FUNCTIONAL_ELEMENTS"
+          ],
+          "mitigations": [
+            "configuration_hardening",
+            "rbac",
+            "change_control",
+            "audit_reviews",
+            "staff_training"
+          ],
+          "evidence": "\ue200filecite\ue202turn2file10\ue202L31-L41\ue201"
+        }
+      ]
+    },
+    {
+      "id": "impact",
+      "name": "Impact / Ransom / Destruction",
+      "techniques": [
+        {
+          "id": "ransomware_psap",
+          "name": "Ransomware / malware targeting PSAP",
+          "affected": [
+            "PSAP",
+            "PSAP_WORKSTATIONS",
+            "IT_NETWORK"
+          ],
+          "mitigations": [
+            "segmentation",
+            "backups_3_2_1",
+            "EDR",
+            "offline_backups",
+            "incident_response_playbooks"
+          ],
+          "evidence": "\ue200filecite\ue202turn2file3\ue202L41-L49\ue201"
+        }
+      ]
+    }
+  ]
+}

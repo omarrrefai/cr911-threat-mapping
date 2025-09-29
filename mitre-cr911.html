@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>MiTRE-CR911 — Mapping i3 Threat & Response</title>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<style>
+  :root{
+    --bg:#0f1724; --card:#0b1220; --accent:#00d9a3; --muted:#94a3b8;
+    --high:#ff6b6b; --med:#ffb86b; --low:#7ef6ff;
+    font-family:Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+  }
+  body{margin:0;background:linear-gradient(180deg,#031024 0%, #061428 100%);color:#e6eef8}
+  header{padding:28px 32px;display:flex;align-items:center;gap:18px}
+  header h1{margin:0;font-size:20px;color:var(--accent)}
+  .wrap{display:grid;grid-template-columns:320px 1fr;gap:18px;padding:18px 32px}
+  .panel{background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));padding:16px;border-radius:12px;box-shadow:0 6px 18px rgba(2,6,23,0.6)}
+  .tactic{padding:10px;border-radius:10px;margin-bottom:8px;cursor:pointer}
+  .tactic:hover{filter:brightness(1.06)}
+  .badge{display:inline-block;padding:6px 8px;border-radius:999px;background:rgba(255,255,255,0.04);font-size:12px;color:var(--muted);margin-left:8px}
+  .tech{margin:10px 0;padding:10px;border-radius:8px;background:rgba(255,255,255,0.02)}
+  .fe{display:inline-block;padding:6px 8px;border-radius:6px;margin-right:6px;font-size:12px;background:rgba(255,255,255,0.03)}
+  footer{padding:18px 32px;color:var(--muted);font-size:13px}
+  .legend{display:flex;gap:8px;align-items:center}
+  .pill{padding:6px 10px;border-radius:999px}
+  .risk-high{background:linear-gradient(90deg,#ff6b6b66,#ff3b3b22)}
+  .risk-med{background:linear-gradient(90deg,#ffb86b66,#ff9a3b22)}
+  .risk-low{background:linear-gradient(90deg,#7ef6ff66,#3be8ff22)}
+  .search{width:100%;padding:8px;border-radius:8px;border:0;background:#021025;color:#cfe8ff;margin-bottom:10px}
+  pre{background:#021025;padding:10px;border-radius:8px;overflow:auto}
+</style>
+</head>
+<body>
+<header>
+  <svg width="44" height="44" viewBox="0 0 24 24" fill="none" aria-hidden>
+    <rect width="24" height="24" rx="6" fill="#001827"></rect>
+    <path d="M6 12h12M12 6v12" stroke="#00d9a3" stroke-width="1.6" stroke-linecap="round"/>
+  </svg>
+  <div>
+    <h1>MiTRE-CR911 — Mapping i3 Threat & Response</h1>
+    <div style="color:var(--muted);font-size:13px">Interactive mapping (editable JSON) — designed for PSAP / ESInet threat briefings</div>
+  </div>
+</header>
+
+<div class="wrap">
+  <aside class="panel">
+    <input class="search" placeholder="filter tactics or techniques..." id="q"/>
+    <div id="tacticsList"></div>
+    <div style="margin-top:12px;color:var(--muted);font-size:13px">
+      <strong>Legend</strong>
+      <div class="legend" style="margin-top:6px">
+        <span class="pill risk-high">High / Critical</span>
+        <span class="pill risk-med">Medium</span>
+        <span class="pill risk-low">Low</span>
+      </div>
+    </div>
+  </aside>
+
+  <main class="panel" id="details">
+    <h2 style="margin-top:0" id="title">Select a tactic</h2>
+    <div id="content" style="color:var(--muted)">Click a tactic on the left to see techniques, affected i3 functional elements, and suggested mitigations.</div>
+    <hr style="margin:18px 0;border:none;border-top:1px solid rgba(255,255,255,0.04)"/>
+    <div>
+      <strong>Raw mapping JSON</strong>
+      <pre id="raw"></pre>
+    </div>
+  </main>
+</div>
+
+<footer>
+  Sources: NENA i3 (i3), NENA NG-SEC, and Threat Modeling doc. (This UI is editable; update mapping.json or paste JSON into the developer console to change.)
+</footer>
+
+<script>
+  const DEFAULT_PATH = 'mapping.json';
+  async function load(){
+    let mapping = null;
+    try{
+      const res = await fetch(DEFAULT_PATH,{cache:"no-store"});
+      if(res.ok) mapping = await res.json();
+    }catch(e){
+      // fallback to embedded default if fetch fails
+    }
+    if(!mapping){
+      mapping = {"tactics":[]};
+    }
+    window.mapping = mapping;
+    renderList(mapping.tactics || []);
+    document.getElementById('raw').textContent = JSON.stringify(mapping,null,2);
+  }
+
+  function renderList(tactics){
+    const container = document.getElementById('tacticsList');
+    container.innerHTML = '';
+    const q = document.getElementById('q');
+    q.oninput = ()=> renderList(filterTactics(q.value));
+    for(const t of tactics){
+      const div = document.createElement('div');
+      div.className = 'tactic';
+      div.style.borderLeft = t.risk==='high' ? '4px solid #ff6b6b' : t.risk==='med' ? '4px solid #ffb86b' : '4px solid #7ef6ff';
+      div.innerHTML = `<strong>${t.name}</strong><span class="badge">${(t.techniques||[]).length} tech</span><div style="color:var(--muted);font-size:13px">${(t.techniques||[]).map(x=>x.name).slice(0,2).join(' · ')}</div>`;
+      div.onclick = ()=> showTactic(t);
+      container.appendChild(div);
+    }
+  }
+
+  function filterTactics(q){
+    if(!q) return window.mapping.tactics || [];
+    q=q.toLowerCase();
+    return (window.mapping.tactics||[]).filter(t=> t.name.toLowerCase().includes(q) || (t.techniques||[]).some(tc=>tc.name.toLowerCase().includes(q)));
+  }
+
+  function showTactic(t){
+    document.getElementById('title').textContent = t.name;
+    const c = document.getElementById('content');
+    c.innerHTML = '';
+    for(const tech of (t.techniques||[])){
+      const div = document.createElement('div');
+      div.className = 'tech';
+      div.innerHTML = `<strong>${tech.name}</strong> <span style="float:right;color:var(--muted)">${(tech.affected||[]).join(', ')}</span>
+        <div style="margin-top:8px;color:var(--muted)">${tech.notes || ''}</div>
+        <div style="margin-top:8px"><em>Mitigations</em>: ${(tech.mitigations||tech.mitigation||[]).join(', ')}</div>`;
+      const fe = document.createElement('div');
+      fe.style.marginTop='8px';
+      (tech.affected||[]).forEach(a=>{
+        const s = document.createElement('span'); s.className='fe'; s.textContent=a; fe.appendChild(s);
+      });
+      div.appendChild(fe);
+      if(tech.evidence){
+        const ev = document.createElement('div');
+        ev.style.marginTop='8px'; ev.style.color='var(--muted)'; ev.style.fontSize='13px';
+        ev.textContent = 'Evidence: ' + tech.evidence;
+        div.appendChild(ev);
+      }
+      c.appendChild(div);
+    }
+  }
+
+  load();
+</script>
+</body>
+</html>
