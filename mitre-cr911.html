@@ -190,29 +190,35 @@
         const bd=document.getElementById('backdrop'); bd.style.display='flex'; bd.setAttribute('aria-hidden','false');
 
         // PRINT — IMPORTANT: escape </script> so this inline script isn't terminated.
-        document.getElementById('btn-print').onclick = ()=>{
-          const safeHTML = html.replace(/<\/script>/gi, '<\\/script>');
-          const doc = `
-            <html><head>
-              <meta charset="utf-8">
-              <title>${title}</title>
-              <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
-              <style>
-                body{{font-family:Inter,system-ui,Arial;padding:24px;background:#fff;color:#111}}
-                h1,h2,h3{{margin:12px 0 6px}}
-                pre{{border:1px solid #ddd;padding:12px;border-radius:8px;overflow:auto;background:#0a1f33;color:#e6eef8}}
-                .meta{{margin:8px 0 16px;color:#444;font-size:12px}}
-              </style>
-            </head><body>
-              <h1>${title}</h1>
-              <div class="meta">Tactic: ${esc(tactic.name)}</div>
-              ${safeHTML}
-              <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"><\/script>
-              <script>try{hljs.highlightAll()}catch(e){}<\/script>
-            </body></html>`;
-          const w = window.open('', '_blank'); w.document.open(); w.document.write(doc); w.document.close(); setTimeout(()=>w.print(), 300);
-        };
-      };
+        document.getElementById('btn-print').onclick = function () {
+  // Escape closing script tags so the print window's HTML doesn't break
+  var safeHTML = html.replace(/<\/script/gi, '<\\/script');
+
+  var head = ''
+    + '<html><head><meta charset="utf-8">'
+    + '<title>' + esc(title) + '</title>'
+    + '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">'
+    + '<style>'
+    + 'body{font-family:Inter,system-ui,Arial;padding:24px;background:#fff;color:#111}'
+    + 'h1,h2,h3{margin:12px 0 6px}'
+    + 'pre{border:1px solid #ddd;padding:12px;border-radius:8px;overflow:auto;background:#0a1f33;color:#e6eef8}'
+    + '.meta{margin:8px 0 16px;color:#444;font-size:12px}'
+    + '</style></head><body>';
+
+  var body = ''
+    + '<h1>' + esc(title) + '</h1>'
+    + '<div class="meta">Tactic: ' + esc(tactic.name) + '</div>'
+    + safeHTML
+    + '<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"><\\/script>'
+    + '<script>try{hljs.highlightAll()}catch(e){}<\\/script>'
+    + '</body></html>';
+
+  var w = window.open('', '_blank');
+  w.document.open();
+  w.document.write(head + body);
+  w.document.close();
+  setTimeout(function(){ w.print(); }, 300);
+};
       grid.appendChild(c);
     });
     col.appendChild(grid);
