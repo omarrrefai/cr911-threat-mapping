@@ -3,10 +3,19 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>MiTRE-CR911 — ATT&CK-style Matrix (No Duplicates)</title>
+<title>MiTRE-CR911 — ATT&CK-style Matrix</title>
+
+<!-- UI font -->
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap">
+
+<!-- Highlight.js (code blocks in playbooks) -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css" integrity="sha512-8mOabg+yLFAZZ4wAQ+5bF9w4bK6hm2Bz6o0QF/7Qb2iM8pABYqO7w2D9sZb+2QJzR9r8m3x4O0wDJKcQx9r8fA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
 <style>
-  :root{ --bg:#061226; --panel:#0b1624; --muted:#9fb0c9; --accent:#00d9a3; --card:#0f2230; --cell-border: rgba(255,255,255,0.04); }
+  :root{
+    --bg:#061226; --panel:#0b1624; --muted:#9fb0c9; --accent:#00d9a3; --card:#0f2230;
+    --cell-border: rgba(255,255,255,0.06);
+  }
   *{box-sizing:border-box}
   body{margin:0;background:linear-gradient(180deg,#031028 0%,#061428 100%);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial;color:#e6eef8}
   header{padding:28px 32px;display:flex;align-items:center;gap:16px}
@@ -18,21 +27,46 @@
   .column{min-width:260px;background:transparent;border-radius:8px;padding:6px;flex:0 0 260px}
   .col-head{background:linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.02));padding:10px;border-radius:8px;border:1px solid var(--cell-border);font-weight:700;color:var(--accent);font-size:14px;text-align:center}
   .cell-grid{margin-top:8px;display:flex;flex-direction:column;gap:8px}
-  .cell{background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.02);cursor:pointer;transition:transform .12s,box-shadow .12s}
+  .cell{background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);cursor:pointer;transition:transform .12s,box-shadow .12s}
   .cell:hover{transform:translateY(-4px);box-shadow:0 12px 36px rgba(0,0,0,0.6)}
   .cell .title{font-weight:600;font-size:13px}
   .cell .meta{font-size:12px;color:var(--muted);margin-top:6px}
+
+  /* Modal */
   .modal-backdrop{position:fixed;left:0;top:0;right:0;bottom:0;background:rgba(1,8,14,0.6);display:none;align-items:center;justify-content:center;padding:20px;z-index:40}
-  .modal{background:#041825;border-radius:12px;padding:18px;max-width:960px;width:100%;max-height:86vh;overflow:auto;border:1px solid rgba(255,255,255,0.04)}
-  .modal h2{margin:0 0 8px;color:var(--accent)}
-  .modal .meta{color:var(--muted);font-size:13px;margin-bottom:8px}
-  .close-btn{float:right;background:transparent;border:0;color:var(--muted);font-size:18px;cursor:pointer;padding:6px}
-  .playbook-content h3{margin-top:14px}
-  .playbook-content pre{background:#021422;padding:10px;border-radius:8px;overflow:auto}
-  .tag{display:inline-block;background:rgba(255,255,255,0.03);padding:6px 8px;border-radius:8px;color:var(--muted);font-size:12px;margin-right:6px;margin-top:6px}
-  .links{margin-top:12px}
-  .btn{display:inline-block;padding:8px 10px;border-radius:8px;background:#072432;border:1px solid rgba(255,255,255,0.03);color:#bfefff;text-decoration:none}
-  .footer{max-width:1200px;margin:20px auto 60px;padding:0 20px;color:var(--muted);font-size:13px}
+  .modal{background:#041825;border-radius:14px;padding:0;max-width:1000px;width:100%;max-height:90vh;overflow:hidden;border:1px solid rgba(255,255,255,0.08);box-shadow:0 20px 60px rgba(0,0,0,0.7)}
+  .modal header{padding:16px 18px;border-bottom:1px solid rgba(255,255,255,0.06);align-items:center;gap:10px}
+  .modal h2{margin:0;color:#e9f7ff;font-size:18px}
+  .modal .subtitle{color:var(--muted);font-size:12px}
+  .modal .toolbar{margin-left:auto;display:flex;gap:8px}
+  .btn{display:inline-flex;align-items:center;gap:6px;padding:8px 10px;border-radius:8px;background:#072432;border:1px solid rgba(255,255,255,0.08);color:#bfefff;text-decoration:none;font-size:12px;cursor:pointer}
+  .btn:hover{filter:brightness(1.08)}
+  .close-btn{background:transparent;border:1px solid rgba(255,255,255,0.12);color:#bfefff}
+  .content{display:grid;grid-template-columns:1fr 260px;gap:0;min-height:0}
+  .playbook-pane{padding:18px 20px;overflow:auto}
+  .meta-pane{border-left:1px solid rgba(255,255,255,0.06);padding:18px 16px;overflow:auto;background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.015))}
+  .tag{display:inline-block;background:rgba(255,255,255,0.05);padding:6px 8px;border-radius:8px;color:#cfe8ff;font-size:12px;margin-right:6px;margin-top:6px}
+  .section-title{font-weight:700;margin:10px 0 6px;color:#cfe8ff;font-size:13px}
+
+  /* Prose styles for rendered Markdown */
+  .prose{line-height:1.6;font-size:15px;color:#e9f4ff}
+  .prose h1,.prose h2,.prose h3{color:#e9f7ff;margin:14px 0 6px}
+  .prose h1{font-size:22px} .prose h2{font-size:18px} .prose h3{font-size:16px}
+  .prose p{margin:8px 0}
+  .prose ul, .prose ol{padding-left:20px;margin:8px 0}
+  .prose code{background:#0a1f33;padding:2px 6px;border-radius:6px}
+  .prose pre{background:#0a1f33;border:1px solid rgba(255,255,255,0.06);padding:12px;border-radius:10px;overflow:auto}
+  .prose table{border-collapse:collapse;width:100%;margin:10px 0}
+  .prose th,.prose td{border:1px solid rgba(255,255,255,0.1);padding:8px 10px}
+  .prose a{color:#83d9ff;text-decoration:none;border-bottom:1px dotted rgba(131,217,255,.4)}
+  .prose a:hover{border-bottom-color:#83d9ff}
+
+  footer{max-width:1200px;margin:20px auto 60px;padding:0 20px;color:var(--muted);font-size:13px}
+
+  @media(max-width:980px){
+    .content{grid-template-columns:1fr}
+    .meta-pane{border-left:0;border-top:1px solid rgba(255,255,255,0.06)}
+  }
 </style>
 </head>
 <body>
@@ -42,8 +76,8 @@
     <path d="M6 12h12M12 6v12" stroke="#00d9a3" stroke-width="1.6" stroke-linecap="round"/>
   </svg>
   <div>
-    <h1>MiTRE-CR911 — ATT&CK-style Matrix (No Duplicates)</h1>
-    <div style="color:#9fb0c9;font-size:13px">Columns = tactics. Click a technique to open its playbook (MD if available; otherwise generated).</div>
+    <h1>MiTRE-CR911 — ATT&CK-style Matrix</h1>
+    <div style="color:#9fb0c9;font-size:13px">Columns = tactics. Click a technique to open a presentable playbook (Markdown rendered → HTML).</div>
   </div>
 </header>
 
@@ -56,305 +90,196 @@
   <div class="matrix-table" id="matrix"></div>
 </div>
 
+<!-- Modal -->
 <div id="backdrop" class="modal-backdrop" role="dialog" aria-hidden="true">
   <div class="modal" role="document" aria-modal="true">
-    <button class="close-btn" id="closeBtn" aria-label="Close">&times;</button>
-    <h2 id="modal-title">Technique Playbook</h2>
-    <div class="meta" id="modal-meta"></div>
-    <div class="links" id="modal-links"></div>
-    <div class="playbook-content" id="modal-content"></div>
+    <header>
+      <div>
+        <h2 id="modal-title">Technique Playbook</h2>
+        <div class="subtitle" id="modal-sub"></div>
+      </div>
+      <div class="toolbar">
+        <button class="btn" id="btn-print">Print</button>
+        <a class="btn" id="btn-open-raw" target="_blank" rel="noopener">Open raw</a>
+        <a class="btn" id="btn-download">Download .md</a>
+        <button class="btn close-btn" id="closeBtn" aria-label="Close">Close</button>
+      </div>
+    </header>
+    <div class="content">
+      <div class="playbook-pane">
+        <div id="modal-content" class="prose"></div>
+      </div>
+      <aside class="meta-pane">
+        <div class="section-title">Mitigations</div>
+        <div id="mitigations"></div>
+        <div class="section-title">Affected Elements</div>
+        <div id="affected"></div>
+        <div class="section-title">Evidence</div>
+        <div id="evidence" style="color:var(--muted);font-size:13px"></div>
+      </aside>
+    </div>
   </div>
 </div>
 
-<div class="footer">MiTRE-CR911 — Editable <code>mapping.json</code> is the single source of truth. Keep evidence private if needed.</div>
+<footer>MiTRE-CR911 — <code>mapping.json</code> is the single source of truth. Keep evidence private if needed.</footer>
+
+<!-- Libraries (CDN) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js" integrity="sha512-XZs3H3m2P8mEf3JXXV0jWw9n1H4gM3hA8k9N5D9y7A1XHnqCkWZu2g8gQnQ3Q7mWL8oQb1oH2dS0W8j6E8h0xA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.7/purify.min.js" integrity="sha512-QG4wD0gO2xg6DzhVb0V+Oyq3U8Kp9X0+3i0r8yC2o8YH1Fqk0ZkWZg3ZkMZ7v5u0b4v7Xx4rRrH9WlX8kO7w8Q==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" integrity="sha512-1t0o8K9a0cW4Y6bPP8x9xegH8Mo6V8wKk8p9b9m7uJmO5q8kqU1X0J8p6iC3V/3b7rE2/9oWnI6J6S5Y2cQG2A==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
 <script>
-function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  // Utility
+  const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
-function md2html(md){
-  md = md.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
-  md = md.replace(/```([\s\S]*?)```/g, (_,code)=>'<pre>'+code+'</pre>');
-  md = md.replace(/^### (.*)$/gim,'<h3>$1</h3>');
-  md = md.replace(/^## (.*)$/gim,'<h2>$1</h2>');
-  md = md.replace(/^# (.*)$/gim,'<h1>$1</h1>');
-  md = md.replace(/\*\*(.*?)\*\*/gim,'<strong>$1</strong>');
-  md = md.replace(/\[(.*?)\]\((.*?)\)/gim,'<a href="$2" target="_blank" rel="noopener">$1</a>');
-  md = md.replace(/^\s*[-*] (.*)$/gim,'<li>$1</li>');
-  md = md.replace(/(?:^|\n)(<li>[\s\S]*?<\/li>)(?=\n(?!<li>)|$)/g,'<ul>$1</ul>');
-  md = md.split(/\n\n+/).map(p=>/^<h|^<ul|^<pre/.test(p)?p:'<p>'+p.replace(/\n/g,'<br/>')+'</p>').join('\n');
-  return md;
-}
-
-function buildPlaybookFromTech(tactic, tech){
-  const lines = [];
-  lines.push('<h3>Summary</h3>');
-  lines.push('<p><strong>Tactic:</strong> '+esc(tactic.name)+' • <strong>Technique ID:</strong> '+esc(tech.id)+'</p>');
-  if(tech.description) lines.push('<p>'+esc(tech.description)+'</p>');
-  lines.push('<h3>Affected Functional Elements</h3><p>'+esc((tech.affected||[]).join(', '))+'</p>');
-  lines.push('<h3>Mitigations</h3><p>'+esc((tech.mitigations||tech.mitigation||[]).join(', '))+'</p>');
-  lines.push('<h3>Evidence</h3><p style="color:var(--muted)">'+esc(tech.evidence||'(none)')+'</p>');
-  lines.push('<h3>Detection & Telemetry</h3>');
-  const id=tech.id||''; let signals=[];
-  if(['lis_impersonation','lis_data_tamper','data_exfil_lis'].includes(id)){
-    signals=['Certificate or signer mismatch for PIDF-LO/location tokens','Unusual LVF query failures or revalidations for same call','Sudden change in location-by-value vs location-by-reference','Spikes in LIS queries from atypical clients'];
-  }else if(['tdos_sip_flood','caller_id_spoof','lis_query_flood'].includes(id)){
-    signals=['Sharp increase in SIP INVITEs from few source IPs/ASNs','Queue depth/abandonment spikes at PSAP','Rate-limit counters triggering at BCF/edge','Repeated invalid/failed STIR/SHAKEN attestations'];
-  }else if(['lvf_gis_poison'].includes(id)){
-    signals=['LVF validation failures after data updates','Hash/version drift between prod and golden GIS snapshots','Unauthorized write events to LVF/GIS repos'];
-  }else if(['legacy_protocol_injection','rtp_injection'].includes(id)){
-    signals=['Protocol conformance violations at LNG/LPG','RTP/SRTP negotiation anomalies','Unexpected codec/SDP attributes or malformed frames'];
-  }else if(['sw_bugs_esrp','protocol_downgrade'].includes(id)){
-    signals=['Crashes/restarts in ESRP/ECRF/LIS','TLS handshake failures or downgraded ciphers','WAF/IDS signatures for CVEs on NG components'];
-  }else{
-    signals=['Anomalous auth/config changes or request/response patterns','Error-rate spikes, latency changes, or throughput anomalies'];
+  // Markdown → sanitized HTML with syntax highlighting
+  function renderMarkdown(md){
+    marked.setOptions({ mangle:false, headerIds:true, breaks:false });
+    const html = marked.parse(md);
+    const clean = DOMPurify.sanitize(html);
+    return clean;
   }
-  lines.push('<ul>'+signals.map(s=>'<li>'+esc(s)+'</li>').join('')+'</ul>');
-  lines.push('<h3>Triage</h3><ul><li>Scope impacted elements/paths</li><li>Check past 24h vs 7d trend</li><li>Validate certs, endpoint IDs, rate anomalies, schema violations</li></ul>');
-  lines.push('<h3>Containment</h3><ul><li>Block/rate-limit at BCF/edge</li><li>Quarantine nodes; failover</li><li>Disable compromised creds; rotate keys</li></ul>');
-  lines.push('<h3>Eradication</h3><ul><li>Patch/reconfigure</li><li>Rebuild if integrity uncertain</li><li>Restore validated LVF/GIS datasets</li></ul>');
-  lines.push('<h3>Recovery</h3><ul><li>Reintroduce traffic under monitoring</li><li>Verify origination→BCF→ESRP→ECRF/LVF→PSAP flows</li><li>Post-incident review</li></ul>');
-  lines.push('<h3>Metrics/KPIs</h3><ul><li>MTTD, MTTC, MTTR</li><li>False positives</li><li>% endpoints with mTLS/STIR-SHAKEN</li></ul>');
-  return lines.join('\n');
-}
+  function highlightCodeIn(el){ try{ hljs.highlightAll(); }catch(e){} }
 
-// Prefer MD if present; otherwise use generated from mapping
-async function getPlaybookContent(tactic, tech){
-  try{
-    const res = await fetch('playbooks/' + tech.id + '.md', { cache: 'no-store' });
-    if(res.ok){
-      const md = await res.text();
-      if(md && md.trim().length > 0){
-        return md2html(md); // render pretty
-      }
+  // Build a generated playbook (fallback)
+  function buildPlaybookFromTech(tactic, tech){
+    const lines = [];
+    lines.push('# ' + esc(tech.name));
+    if(tech.description) lines.push('\\n' + esc(tech.description));
+    lines.push('\\n## Detection & Telemetry');
+    const id=tech.id||''; let signals=[];
+    if(['lis_impersonation','lis_data_tamper','data_exfil_lis'].includes(id)){
+      signals=['Certificate or signer mismatch for PIDF-LO/location tokens','Unusual LVF query failures or revalidations for same call','Sudden change in location-by-value vs by-reference','Spikes in LIS queries from atypical clients'];
+    } else if(['tdos_sip_flood','caller_id_spoof','lis_query_flood'].includes(id)){
+      signals=['Sharp surge in SIP INVITEs from few IPs/ASNs','ESRP 4xx/5xx and PSAP queue depth spikes','Rate-limit counters firing at BCF','Repeated invalid STIR/SHAKEN attestations'];
+    } else if(['lvf_gis_poison'].includes(id)){
+      signals=['LVF validation failures after data updates','Hash/version drift with golden GIS snapshots','Unauthorized writes to LVF/GIS repos'];
+    } else if(['legacy_protocol_injection','rtp_injection'].includes(id)){
+      signals=['Protocol conformance violations at LNG/LPG','RTP/SRTP negotiation anomalies','Unexpected SDP/codec attributes'];
+    } else if(['sw_bugs_esrp','protocol_downgrade'].includes(id)){
+      signals=['Service crashes/restarts in ESRP/ECRF/LIS','TLS handshake failures/downgrades','WAF/IDS hits for CVEs on NG components'];
+    } else if(['phishing_workstation','ransomware_psap','misconfig_admin','supply_chain_component'].includes(id)){
+      signals=['New suspicious processes on PSAP hosts','EDR ransomware indicators','Privileged changes outside window','Unexpected vendor updates/binaries'];
+    } else {
+      signals=['Anomalous auth/config or request patterns','Error-rate / latency / throughput anomalies'];
     }
-  }catch(e){}
-  return buildPlaybookFromTech(tactic, tech);
-}
-
-function createCell(tech){
-  const c=document.createElement('div'); c.className='cell'; c.dataset.techId=tech.id;
-  c.innerHTML='<div class="title">'+esc(tech.name)+'</div><div class="meta">'+esc((tech.affected||[]).join(', '))+'</div>';
-  return c;
-}
-
-function createColumn(tactic){
-  const col=document.createElement('div'); col.className='column';
-  const head=document.createElement('div'); head.className='col-head'; head.textContent=tactic.name; col.appendChild(head);
-  const grid=document.createElement('div'); grid.className='cell-grid';
-  (tactic.techniques||[]).forEach(tech=>{
-    const c=createCell(tech);
-    c.onclick=async ()=>{
-      document.getElementById('modal-title').textContent=tech.name+' ('+tech.id+')';
-      document.getElementById('modal-meta').textContent='Tactic: '+tactic.name;
-      document.getElementById('modal-links').innerHTML='';
-      const html=await getPlaybookContent(tactic, tech);
-      document.getElementById('modal-content').innerHTML=html;
-      const bd=document.getElementById('backdrop'); bd.style.display='flex'; bd.setAttribute('aria-hidden','false');
-    };
-    grid.appendChild(c);
-  });
-  col.appendChild(grid);
-  return col;
-}
-
-async function load(){
-  let mapping={tactics:[]};
-  try{ const r=await fetch('mapping.json',{cache:'no-store'}); mapping=await r.json(); } catch(e){}
-  const matrix=document.getElementById('matrix'); matrix.innerHTML='';
-  (mapping.tactics||[]).forEach(t=>matrix.appendChild(createColumn(t)));
-  const q=document.getElementById('q');
-  q.oninput=()=>{
-    const qv=q.value.trim().toLowerCase();
-    const filtered=(mapping.tactics||[]).map(t=>{
-      const techs=(t.techniques||[]).filter(tc=>tc.name.toLowerCase().includes(qv)||(tc.id||'').toLowerCase().includes(qv)||(tc.affected||[]).join(' ').toLowerCase().includes(qv));
-      return {name:t.name, techniques:techs};
-    }).filter(t=>t.techniques.length>0);
-    matrix.innerHTML=''; filtered.forEach(t=>matrix.appendChild(createColumn(t)));
-  };
-}
-document.getElementById('closeBtn').onclick=()=>{ const bd=document.getElementById('backdrop'); bd.style.display='none'; bd.setAttribute('aria-hidden','true'); };
-document.getElementById('backdrop').onclick=(e)=>{ if(e.target.id==='backdrop'){ const bd=document.getElementById('backdrop'); bd.style.display='none'; bd.setAttribute('aria-hidden','true'); }};
-load();
-</script>
-</body>
-</html>
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>MiTRE-CR911 — ATT&CK-style Matrix (No Duplicates)</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap">
-<style>
-  :root{ --bg:#061226; --panel:#0b1624; --muted:#9fb0c9; --accent:#00d9a3; --card:#0f2230; --cell-border: rgba(255,255,255,0.04); }
-  *{box-sizing:border-box}
-  body{margin:0;background:linear-gradient(180deg,#031028 0%,#061428 100%);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial;color:#e6eef8}
-  header{padding:28px 32px;display:flex;align-items:center;gap:16px}
-  header h1{margin:0;color:var(--accent);font-size:20px}
-  .wrap{padding:10px 20px 40px;max-width:1400px;margin:0 auto}
-  .controls{display:flex;gap:12px;align-items:center;margin-bottom:12px}
-  .search{padding:10px 12px;border-radius:10px;border:0;background:#042034;color:#cfe8ff;min-width:260px}
-  .matrix-table{display:flex;gap:12px;align-items:flex-start;overflow:auto;padding-bottom:8px}
-  .column{min-width:260px;background:transparent;border-radius:8px;padding:6px;flex:0 0 260px}
-  .col-head{background:linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.02));padding:10px;border-radius:8px;border:1px solid var(--cell-border);font-weight:700;color:var(--accent);font-size:14px;text-align:center}
-  .cell-grid{margin-top:8px;display:flex;flex-direction:column;gap:8px}
-  .cell{background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.02);cursor:pointer;transition:transform .12s,box-shadow .12s}
-  .cell:hover{transform:translateY(-4px);box-shadow:0 12px 36px rgba(0,0,0,0.6)}
-  .cell .title{font-weight:600;font-size:13px}
-  .cell .meta{font-size:12px;color:var(--muted);margin-top:6px}
-  .modal-backdrop{position:fixed;left:0;top:0;right:0;bottom:0;background:rgba(1,8,14,0.6);display:none;align-items:center;justify-content:center;padding:20px;z-index:40}
-  .modal{background:#041825;border-radius:12px;padding:18px;max-width:960px;width:100%;max-height:86vh;overflow:auto;border:1px solid rgba(255,255,255,0.04)}
-  .modal h2{margin:0 0 8px;color:var(--accent)}
-  .modal .meta{color:var(--muted);font-size:13px;margin-bottom:8px}
-  .close-btn{float:right;background:transparent;border:0;color:var(--muted);font-size:18px;cursor:pointer;padding:6px}
-  .playbook-content h3{margin-top:14px}
-  .playbook-content pre{background:#021422;padding:10px;border-radius:8px;overflow:auto}
-  .tag{display:inline-block;background:rgba(255,255,255,0.03);padding:6px 8px;border-radius:8px;color:var(--muted);font-size:12px;margin-right:6px;margin-top:6px}
-  .links{margin-top:12px}
-  .btn{display:inline-block;padding:8px 10px;border-radius:8px;background:#072432;border:1px solid rgba(255,255,255,0.03);color:#bfefff;text-decoration:none}
-  .footer{max-width:1200px;margin:20px auto 60px;padding:0 20px;color:var(--muted);font-size:13px}
-</style>
-</head>
-<body>
-<header>
-  <svg width="44" height="44" viewBox="0 0 24 24" fill="none" aria-hidden>
-    <rect width="24" height="24" rx="6" fill="#001827"></rect>
-    <path d="M6 12h12M12 6v12" stroke="#00d9a3" stroke-width="1.6" stroke-linecap="round"/>
-  </svg>
-  <div>
-    <h1>MiTRE-CR911 — ATT&CK-style Matrix (No Duplicates)</h1>
-    <div style="color:#9fb0c9;font-size:13px">Columns = tactics. Click a technique to open its playbook (MD if available; otherwise generated).</div>
-  </div>
-</header>
-
-<div class="wrap">
-  <div class="controls">
-    <input id="q" class="search" placeholder="Filter tactics or techniques..." />
-    <a class="btn" href="index.html">Home</a>
-    <a class="btn" href="playbooks/index.html">Playbooks</a>
-  </div>
-  <div class="matrix-table" id="matrix"></div>
-</div>
-
-<div id="backdrop" class="modal-backdrop" role="dialog" aria-hidden="true">
-  <div class="modal" role="document" aria-modal="true">
-    <button class="close-btn" id="closeBtn" aria-label="Close">&times;</button>
-    <h2 id="modal-title">Technique Playbook</h2>
-    <div class="meta" id="modal-meta"></div>
-    <div class="links" id="modal-links"></div>
-    <div class="playbook-content" id="modal-content"></div>
-  </div>
-</div>
-
-<div class="footer">MiTRE-CR911 — Editable <code>mapping.json</code> is the single source of truth. Keep evidence private if needed.</div>
-
-<script>
-function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-
-function md2html(md){
-  md = md.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
-  md = md.replace(/```([\\s\\S]*?)```/g, (_,code)=>'<pre>'+code+'</pre>');
-  md = md.replace(/^### (.*)$/gim,'<h3>$1</h3>');
-  md = md.replace(/^## (.*)$/gim,'<h2>$1</h2>');
-  md = md.replace(/^# (.*)$/gim,'<h1>$1</h1>');
-  md = md.replace(/\\*\\*(.*?)\\*\\*/gim,'<strong>$1</strong>');
-  md = md.replace(/\\[(.*?)\\]\\((.*?)\\)/gim,'<a href="$2" target="_blank" rel="noopener">$1</a>');
-  md = md.replace(/^\\s*[-*] (.*)$/gim,'<li>$1</li>');
-  md = md.replace(/(?:^|\\n)(<li>[\\s\\S]*?<\\/li>)(?=\\n(?!<li>)|$)/g,'<ul>$1</ul>');
-  md = md.split(/\\n\\n+/).map(p=>/^<h|^<ul|^<pre/.test(p)?p:'<p>'+p.replace(/\\n/g,'<br/>')+'</p>').join('\\n');
-  return md;
-}
-
-function buildPlaybookFromTech(tactic, tech){
-  const lines = [];
-  lines.push('<h3>Summary</h3>');
-  lines.push('<p><strong>Tactic:</strong> '+esc(tactic.name)+' • <strong>Technique ID:</strong> '+esc(tech.id)+'</p>');
-  if(tech.description) lines.push('<p>'+esc(tech.description)+'</p>');
-  lines.push('<h3>Affected Functional Elements</h3><p>'+esc((tech.affected||[]).join(', '))+'</p>');
-  lines.push('<h3>Mitigations</h3><p>'+esc((tech.mitigations||tech.mitigation||[]).join(', '))+'</p>');
-  lines.push('<h3>Evidence</h3><p style="color:var(--muted)">'+esc(tech.evidence||'(none)')+'</p>');
-  lines.push('<h3>Detection & Telemetry</h3>');
-  const id=tech.id||''; let signals=[];
-  if(['lis_impersonation','lis_data_tamper','data_exfil_lis'].includes(id)){
-    signals=['Certificate or signer mismatch for PIDF-LO/location tokens','Unusual LVF query failures or revalidations for same call','Sudden change in location-by-value vs location-by-reference','Spikes in LIS queries from atypical clients'];
-  }else if(['tdos_sip_flood','caller_id_spoof','lis_query_flood'].includes(id)){
-    signals=['Sharp increase in SIP INVITEs from few source IPs/ASNs','Queue depth/abandonment spikes at PSAP','Rate-limit counters triggering at BCF/edge','Repeated invalid/failed STIR/SHAKEN attestations'];
-  }else if(['lvf_gis_poison'].includes(id)){
-    signals=['LVF validation failures after data updates','Hash/version drift between prod and golden GIS snapshots','Unauthorized write events to LVF/GIS repos'];
-  }else if(['legacy_protocol_injection','rtp_injection'].includes(id)){
-    signals=['Protocol conformance violations at LNG/LPG','RTP/SRTP negotiation anomalies','Unexpected codec/SDP attributes or malformed frames'];
-  }else if(['sw_bugs_esrp','protocol_downgrade'].includes(id)){
-    signals=['Crashes/restarts in ESRP/ECRF/LIS','TLS handshake failures or downgraded ciphers','WAF/IDS signatures for CVEs on NG components'];
-  }else if(['phishing_workstation','ransomware_psap','misconfig_admin','supply_chain_component'].includes(id)){
-    signals=['New processes/persistence on PSAP hosts','EDR alerts for ransomware behaviors','Unauthorized config changes outside change windows','Unexpected vendor updates or binaries'];
-  }else{
-    signals=['Anomalous auth/config changes or request/response patterns','Error-rate spikes, latency changes, or throughput anomalies'];
+    lines.push(signals.map(s=>'- '+s).join('\\n'));
+    lines.push('\\n## Triage');
+    lines.push('- Scope affected elements and paths\\n- Compare last 24h vs 7d trend\\n- Validate certs, endpoint IDs, rate anomalies, schema violations');
+    lines.push('\\n## Containment');
+    lines.push('- Block/rate-limit at BCF/edge\\n- Quarantine nodes and fail over\\n- Disable compromised creds; rotate keys');
+    lines.push('\\n## Eradication');
+    lines.push('- Patch/reconfigure\\n- Rebuild if integrity uncertain\\n- Restore validated LVF/GIS datasets');
+    lines.push('\\n## Recovery');
+    lines.push('- Reintroduce traffic with heightened monitoring\\n- Verify origination→BCF→ESRP→ECRF/LVF→PSAP flows\\n- Post-incident review');
+    lines.push('\\n## Metrics / KPIs');
+    lines.push('- MTTD, MTTC, MTTR\\n- False positives\\n- % endpoints with mTLS / STIR-SHAKEN');
+    return lines.join('\\n');
   }
-  lines.push('<ul>'+signals.map(s=>'<li>'+esc(s)+'</li>').join('')+'</ul>');
-  lines.push('<h3>Triage</h3><ul><li>Scope impacted elements/paths</li><li>Check past 24h vs 7d trend</li><li>Validate certs, endpoint IDs, rate anomalies, schema violations</li></ul>');
-  lines.push('<h3>Containment</h3><ul><li>Block/rate-limit at BCF/edge</li><li>Quarantine nodes; failover</li><li>Disable compromised creds; rotate keys</li></ul>');
-  lines.push('<h3>Eradication</h3><ul><li>Patch/reconfigure</li><li>Rebuild if integrity uncertain</li><li>Restore validated LVF/GIS datasets</li></ul>');
-  lines.push('<h3>Recovery</h3><ul><li>Reintroduce traffic under monitoring</li><li>Verify origination→BCF→ESRP→ECRF/LVF→PSAP flows</li><li>Post-incident review</li></ul>');
-  lines.push('<h3>Metrics/KPIs</h3><ul><li>MTTD, MTTC, MTTR</li><li>False positives</li><li>% endpoints with mTLS/STIR-SHAKEN</li></ul>');
-  return lines.join('\\n');
-}
 
-// Prefer MD playbook if present; else generated from mapping
-async function getPlaybookContent(tactic, tech){
-  try{
-    const res = await fetch('playbooks/' + tech.id + '.md', { cache: 'no-store' });
-    if(res.ok){
-      const md = await res.text();
-      if(md && md.trim().length > 0){ return md2html(md); }
-    }
-  }catch(e){}
-  return buildPlaybookFromTech(tactic, tech);
-}
+  async function loadPlaybookMD(id){
+    try{
+      const res = await fetch('playbooks/' + id + '.md', { cache:'no-store' });
+      if(res.ok) return await res.text();
+    }catch(e){}
+    return null;
+  }
 
-function createCell(tech){
-  const c=document.createElement('div'); c.className='cell'; c.dataset.techId=tech.id;
-  c.innerHTML='<div class="title">'+esc(tech.name)+'</div><div class="meta">'+esc((tech.affected||[]).join(', '))+'</div>';
-  return c;
-}
+  function createCell(tech){
+    const c=document.createElement('div'); c.className='cell'; c.dataset.techId=tech.id;
+    c.innerHTML='<div class="title">'+esc(tech.name)+'</div><div class="meta">'+esc((tech.affected||[]).join(', '))+'</div>';
+    return c;
+  }
 
-function createColumn(tactic){
-  const col=document.createElement('div'); col.className='column';
-  const head=document.createElement('div'); head.className='col-head'; head.textContent=tactic.name; col.appendChild(head);
-  const grid=document.createElement('div'); grid.className='cell-grid';
-  (tactic.techniques||[]).forEach(tech=>{
-    const c=createCell(tech);
-    c.onclick=async ()=>{
-      document.getElementById('modal-title').textContent=tech.name+' ('+tech.id+')';
-      document.getElementById('modal-meta').textContent='Tactic: '+tactic.name;
-      document.getElementById('modal-links').innerHTML='';
-      const html=await getPlaybookContent(tactic, tech);
-      document.getElementById('modal-content').innerHTML=html;
-      const bd=document.getElementById('backdrop'); bd.style.display='flex'; bd.setAttribute('aria-hidden','false');
+  function createColumn(tactic){
+    const col=document.createElement('div'); col.className='column';
+    const head=document.createElement('div'); head.className='col-head'; head.textContent=tactic.name; col.appendChild(head);
+    const grid=document.createElement('div'); grid.className='cell-grid';
+    (tactic.techniques||[]).forEach(tech=>{
+      const c=createCell(tech);
+      c.onclick=async ()=>{
+        const title = tech.name + ' (' + tech.id + ')';
+        document.getElementById('modal-title').textContent = title;
+        document.getElementById('modal-sub').textContent = 'Tactic: ' + tactic.name;
+
+        // Right rail: mitigations / affected / evidence
+        const mitig = document.getElementById('mitigations'); mitig.innerHTML='';
+        (tech.mitigations||tech.mitigation||[]).forEach(m=>{ const s=document.createElement('span'); s.className='tag'; s.textContent=m; mitig.appendChild(s); });
+        const aff = document.getElementById('affected'); aff.innerHTML='';
+        (tech.affected||[]).forEach(a=>{ const s=document.createElement('span'); s.className='tag'; s.textContent=a; aff.appendChild(s); });
+        document.getElementById('evidence').textContent = tech.evidence || '(none)';
+
+        // Load MD if available, else generate
+        let md = await loadPlaybookMD(tech.id);
+        if(!md){ md = buildPlaybookFromTech(tactic, tech); }
+
+        const html = renderMarkdown(md);
+        const content = document.getElementById('modal-content');
+        content.innerHTML = html;
+        highlightCodeIn(content);
+
+        // toolbar links
+        const rawHref = 'playbooks/' + tech.id + '.md';
+        document.getElementById('btn-open-raw').href = rawHref;
+        document.getElementById('btn-download').href = rawHref;
+        document.getElementById('btn-download').setAttribute('download', tech.id + '.md');
+
+        // show modal
+        const bd=document.getElementById('backdrop'); bd.style.display='flex'; bd.setAttribute('aria-hidden','false');
+
+        // Print handler
+        document.getElementById('btn-print').onclick = ()=>{
+          const w = window.open('', '_blank');
+          const doc = `
+            <html><head>
+              <title>${title}</title>
+              <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+              <style>
+                body{{font-family:Inter,system-ui,Arial;padding:24px;background:#fff;color:#111;}}
+                h1,h2,h3{{margin:12px 0 6px}}
+                pre{{border:1px solid #ddd;padding:12px;border-radius:8px;overflow:auto;background:#0a1f33;color:#e6eef8}}
+                .meta{{margin:8px 0 16px;color:#444;font-size:12px}}
+              </style>
+            </head><body>
+              <h1>${title}</h1>
+              <div class="meta">Tactic: ${esc(tactic.name)}</div>
+              ${html}
+              <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+              <script>try{{hljs.highlightAll()}}catch(e){{}}</script>
+            </body></html>`;
+          w.document.open(); w.document.write(doc); w.document.close();
+          setTimeout(()=>w.print(), 300);
+        };
+      };
+      grid.appendChild(c);
+    });
+    col.appendChild(grid);
+    return col;
+  }
+
+  async function load(){
+    let mapping={tactics:[]};
+    try{ const r=await fetch('mapping.json',{cache:'no-store'}); mapping=await r.json(); } catch(e){}
+    const matrix=document.getElementById('matrix'); matrix.innerHTML='';
+    (mapping.tactics||[]).forEach(t=>matrix.appendChild(createColumn(t)));
+
+    // filter
+    const q=document.getElementById('q');
+    q.oninput=()=>{
+      const qv=q.value.trim().toLowerCase();
+      const filtered=(mapping.tactics||[]).map(t=>{
+        const techs=(t.techniques||[]).filter(tc=>{
+          return tc.name.toLowerCase().includes(qv) || (tc.id||'').toLowerCase().includes(qv) || (tc.affected||[]).join(' ').toLowerCase().includes(qv);
+        });
+        return { name:t.name, techniques:techs };
+      }).filter(t=>t.techniques.length>0);
+      matrix.innerHTML=''; filtered.forEach(t=>matrix.appendChild(createColumn(t)));
     };
-    grid.appendChild(c);
-  });
-  col.appendChild(grid);
-  return col;
-}
+  }
 
-async function load(){
-  let mapping={tactics:[]};
-  try{ const r=await fetch('mapping.json',{cache:'no-store'}); mapping=await r.json(); } catch(e){}
-  const matrix=document.getElementById('matrix'); matrix.innerHTML='';
-  (mapping.tactics||[]).forEach(t=>matrix.appendChild(createColumn(t)));
-  const q=document.getElementById('q');
-  q.oninput=()=>{
-    const qv=q.value.trim().toLowerCase();
-    const filtered=(mapping.tactics||[]).map(t=>{
-      const techs=(t.techniques||[]).filter(tc=>tc.name.toLowerCase().includes(qv)||(tc.id||'').toLowerCase().includes(qv)||(tc.affected||[]).join(' ').toLowerCase().includes(qv));
-      return {name:t.name, techniques:techs};
-    }).filter(t=>t.techniques.length>0);
-    matrix.innerHTML=''; filtered.forEach(t=>matrix.appendChild(createColumn(t)));
-  };
-}
-document.getElementById('closeBtn').onclick=()=>{ const bd=document.getElementById('backdrop'); bd.style.display='none'; bd.setAttribute('aria-hidden','true'); };
-document.getElementById('backdrop').onclick=(e)=>{ if(e.target.id==='backdrop'){ const bd=document.getElementById('backdrop'); bd.style.display='none'; bd.setAttribute('aria-hidden','true'); }};
-load();
+  document.getElementById('closeBtn').onclick=()=>{ const bd=document.getElementById('backdrop'); bd.style.display='none'; bd.setAttribute('aria-hidden','true'); };
+  document.getElementById('backdrop').onclick=(e)=>{ if(e.target.id==='backdrop'){ const bd=document.getElementById('backdrop'); bd.style.display='none'; bd.setAttribute('aria-hidden','true'); }};
+  load();
 </script>
 </body>
 </html>
