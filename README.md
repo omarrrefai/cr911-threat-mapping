@@ -1,4 +1,4 @@
-# MiTRE-CR911
+# CR911 Threat Mapping
 
 Editable CR911 Threat Matrix mapping for NG911 / PSAP security.
 This repo contains:
