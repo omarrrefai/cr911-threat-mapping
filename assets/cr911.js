@@ -1,4 +1,4 @@
-/* Matrix logic (external) */
+/* CR911 Threat Matrix logic (external; no inline backticks) */
 (function () {
   const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
@@ -9,6 +9,7 @@
   }
   function highlightCode(){ try{ hljs.highlightAll(); }catch(e){} }
 
+  // Fallback playbook (used if no MD file is found)
   function buildPlaybookFromTech(tactic, tech){
     const lines = [];
     lines.push('# ' + esc(tech.name));
@@ -29,7 +30,6 @@
       sig=['Suspicious processes on PSAP hosts','EDR ransomware indicators','Privileged changes outside window','Unexpected vendor updates'];
     else
       sig=['Anomalous auth/config or request patterns','Error/latency/throughput anomalies'];
-
     lines.push(sig.map(s=>'- '+s).join('\n'));
     lines.push('\n## Triage\n- Scope affected elements and paths\n- Compare 24h vs 7d\n- Validate certs/IDs/rates/schema');
     lines.push('\n## Containment\n- Block/rate-limit at BCF\n- Quarantine & failover\n- Disable creds; rotate keys');
@@ -62,33 +62,38 @@
         document.getElementById('modal-title').textContent = title;
         document.getElementById('modal-sub').textContent   = 'Tactic: ' + tactic.name;
 
+        // Right rail meta
         const mitig=document.getElementById('mitigations'); mitig.innerHTML='';
         (tech.mitigations||tech.mitigation||[]).forEach(m=>{ const s=document.createElement('span'); s.className='tag'; s.textContent=m; mitig.appendChild(s); });
         const aff=document.getElementById('affected'); aff.innerHTML='';
         (tech.affected||[]).forEach(a=>{ const s=document.createElement('span'); s.className='tag'; s.textContent=a; aff.appendChild(s); });
         document.getElementById('evidence').textContent = tech.evidence || '(none)';
 
+        // Content
         let md = await loadPlaybookMD(tech.id);
         if(!md) md = buildPlaybookFromTech(tactic, tech);
         const html = renderMarkdown(md);
         const content = document.getElementById('modal-content');
         content.innerHTML = html; highlightCode();
 
+        // Toolbar links
         const rawHref = 'playbooks/' + tech.id + '.md';
         document.getElementById('btn-open-raw').href = rawHref;
         document.getElementById('btn-download').href = rawHref;
         document.getElementById('btn-download').setAttribute('download', tech.id + '.md');
 
+        // Show modal
         const bd=document.getElementById('backdrop'); bd.style.display='flex'; bd.setAttribute('aria-hidden','false');
 
-        // PRINT — safe (no backticks; escape </script>)
+        // Print (no backticks; escape </script>)
         document.getElementById('btn-print').onclick = function(){
           var safeHTML = html.replace(/<\/script/gi, '<\\/script');
           var head = ''
             + '<html><head><meta charset="utf-8"><title>' + esc(title) + '</title>'
             + '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">'
-            + '<style>body{font-family:Inter,system-ui,Arial;padding:24px;background:#fff;color:#111}h1,h2,h3{margin:12px 0 6px}pre{border:1px solid #ddd;padding:12px;border-radius:8px;overflow:auto;background:#0a1f33;color:#e6eef8}.meta{margin:8px 0 16px;color:#444;font-size:12px}</style>'
-            + '</head><body>';
+            + '<style>body{font-family:Inter,system-ui,Arial;padding:24px;background:#fff;color:#111}'
+            + 'h1,h2,h3{margin:12px 0 6px}pre{border:1px solid #ddd;padding:12px;border-radius:8px;overflow:auto;background:#0a1f33;color:#e6eef8}'
+            + '.meta{margin:8px 0 16px;color:#444;font-size:12px}</style></head><body>';
           var body = ''
             + '<h1>' + esc(title) + '</h1>'
             + '<div class="meta">Tactic: ' + esc(tactic.name) + '</div>'
@@ -96,8 +101,7 @@
             + '<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"><\\/script>'
             + '<script>try{hljs.highlightAll()}catch(e){}<\\/script>'
             + '</body></html>';
-          var w = window.open('', '_blank');
-          w.document.open(); w.document.write(head + body); w.document.close();
+          var w = window.open('', '_blank'); w.document.open(); w.document.write(head + body); w.document.close();
           setTimeout(function(){ w.print(); }, 300);
         };
       };

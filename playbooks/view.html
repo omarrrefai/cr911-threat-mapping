@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Playbook Viewer • MiTRE-CR911</title>
+<title>CR911 Playbook Viewer</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
 <style>
   body{margin:0;background:linear-gradient(180deg,#071024 0%,#0b1226 100%);color:#e6eef8;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial}
   .wrap{max-width:900px;margin:0 auto;padding:28px 20px}
@@ -29,9 +29,9 @@
   <div id="content" class="prose"></div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js" crossorigin="anonymous"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.7/purify.min.js" crossorigin="anonymous"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.7/purify.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
 <script>
 const qs = new URLSearchParams(location.search);
 const id = qs.get('id') || '';
@@ -39,7 +39,7 @@ const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replac
 
 function renderMarkdown(md){
   marked.setOptions({ mangle:false, headerIds:true, breaks:false });
-  const html = marked.parse(md);
+  const html = marked.parse(md || '');
   return DOMPurify.sanitize(html);
 }
 function highlightCode(){ try{ hljs.highlightAll(); }catch(e){} }
@@ -48,39 +48,37 @@ function buildPlaybookFromTech(tactic, tech){
   const lines = [];
   lines.push('# ' + esc(tech.name));
   if(tech.description) lines.push('\\n' + esc(tech.description));
-  lines.push('\\n## Detection & Telemetry\\n- See matrix modal for recommended signals.');
-  lines.push('\\n## Response\\n- Contain, eradicate, recover as in matrix modal.');
+  lines.push('\\n## Detection & Telemetry\\n- See CR911 Matrix guidance.');
+  lines.push('\\n## Response\\n- Contain, eradicate, recover per CR911 runbooks.');
   return lines.join('\\n');
 }
 
 (async ()=>{
-  const titleEl = document.getElementById('title');
-  const metaEl  = document.getElementById('meta');
-  const contEl  = document.getElementById('content');
-
   const mapping = await (await fetch('../mapping.json',{cache:'no-store'})).json();
   let tactic=null, tech=null;
   for(const t of (mapping.tactics||[])){ for(const tc of (t.techniques||[])){ if(tc.id===id){ tactic=t; tech=tc; break; } } if(tech) break; }
-  if(!tech){ titleEl.textContent='Not found'; contEl.textContent='Unknown technique id.'; return; }
+  if(!tech){ document.getElementById('title').textContent='Not found'; return; }
 
-  titleEl.textContent = tech.name + ' (' + tech.id + ')';
-  metaEl.textContent  = 'Tactic: ' + tactic.name;
+  const title = tech.name + ' (' + tech.id + ')';
+  document.getElementById('title').textContent = title;
+  document.getElementById('meta').textContent  = 'Tactic: ' + tactic.name;
 
   let md = null;
   try{ const r=await fetch(id + '.md', {cache:'no-store'}); if(r.ok) md = await r.text(); }catch(e){}
   if(!md) md = buildPlaybookFromTech(tactic, tech);
 
   const html = renderMarkdown(md);
-  contEl.innerHTML = html; highlightCode();
+  const cont = document.getElementById('content');
+  cont.innerHTML = html; highlightCode();
 
-  const raw = document.getElementById('openRaw'); raw.href = id + '.md';
-  const dl  = document.getElementById('download'); dl.href = id + '.md'; dl.download = id + '.md';
+  document.getElementById('openRaw').href = id + '.md';
+  document.getElementById('download').href = id + '.md'; document.getElementById('download').download = id + '.md';
 
   document.getElementById('print').onclick = ()=>{
-    const safeHTML = html.replace(/<\/script>/gi,'<\\/script>');
-    const w = window.open('','_blank'); 
-    w.document.open(); 
-    w.document.write(`<html><head><meta charset="utf-8"><title>${titleEl.textContent}</title></head><body>${safeHTML}<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"><\\/script><script>try{hljs.highlightAll()}catch(e){}<\\/script></body></html>`); 
+    var safeHTML = html.replace(/<\/script/gi,'<\\/script');
+    var w = window.open('','_blank');
+    w.document.open();
+    w.document.write('<html><head><meta charset="utf-8"><title>' + esc(title) + '</title></head><body>' + safeHTML + '</body></html>');
     w.document.close(); setTimeout(()=>w.print(), 300);
   };
 })();

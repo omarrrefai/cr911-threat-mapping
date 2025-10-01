@@ -1,6 +1,6 @@
 {
   "meta": {
-    "name": "MiTRE-CR911",
+    "name": "CR911 Threat Matrix",
     "version": "2025-09-29",
     "sources": [
       { "id": "ThreatModel", "path": "evidence/Updated - NG911 Threat Modeling and Risk Assessment - 4.1.docx" },

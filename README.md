@@ -1,9 +1,9 @@
 # MiTRE-CR911
 
-Editable ATT&CK-style mapping for NG911 / PSAP security (MiTRE-CR911).
+Editable CR911 Threat Matrix mapping for NG911 / PSAP security.
 This repo contains:
 - mapping.json : canonical JSON mapping of tactics → techniques → affected i3 functional elements → mitigations
-- mitre-cr911.html : single-file interactive UI that reads mapping.json
+- cr911.-matrix.html : single-file interactive UI that reads mapping.json
 - schema/ : JSON Schema for CI validation
 - ci/validate_schema.py : simple schema validation script for CI
 - playbooks/ : sample playbooks exported per technique
